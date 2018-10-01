@@ -1,65 +1,68 @@
 #include <ros/ros.h>
+#include <std_msgs/Float32.h>
+#include <phidgets/motor_encoder.h>
 #include <geometry_msgs/Twist.h>
-#include <ras_lab1_msgs/PWM.h>
-#include <ras_lab1_msgs/Encoders.h>
 
 
-double t_W1 = 0;
-double t_W2 = 0;
+double t_WLeft = 0;
+double t_WRight = 0;
 
-double Kp1 = 1.0;
-double Kp2 = 1.0;
+double KpLeft = 1.0;
+double KpRight = 1.0;
 
-double Ki1 = 1.0;
-double Ki2 = 1.0;
+double KiLeft = 1.0;
+double KiRight = 1.0;
 
 double wlR = 1.0;
 double wrR = 1.0;
 
 double wheelSeparation = 1.0;
 
-float motor1PWM;
-float motor2PWM;
+float motorLeftPWM;
+float motorRightPWM;
 
-double errorSum1 = 0;
-double errorSum2 = 0;
+double errorSumLeft = 0;
+double errorSumRight = 0;
 
-void setPWM(float motor1, float motor2){
-    motor1PWM = motor1;
-    motor2PWM = motor2;
+void setPWM(float motorLeft, float motorRight){
+    motorLeftPWM = motorLeft;
+    motorRightPWM = motorRight;
 }
 
 /*
-int32 encoder1;
-int32 encoder2;
-int32 delta_encoder1;
-int32 delta_encoder2;
-int32 timestamp;
+std_msgs/Header header
+  uint32 seq
+  time stamp
+  string frame_id
+int32 count
+int32 count_change
+
 */
-void encodersCallback(const ras_lab1_msgs::Encoders& msg){
+void encoderLeftCallback(const phidgets::motor_encoder& msg){
     ROS_INFO("-----------");
-    ROS_INFO("E1: %d, E2: %d, dE1: %d, dE2: %d", msg.encoder1,msg.encoder1,msg.delta_encoder1,msg.delta_encoder2);
+    ROS_INFO("LEFT:: E1: %d, E2: %d", msg.count,msg.count_change);
     
-    double est_w1 = ((double)msg.delta_encoder1 * 10.0 * 2.0 * 3.1415)/(360.0);
-    double est_w2 = ((double)msg.delta_encoder2 * 10.0 * 2.0 * 3.1415)/(360.0);
+    double est_w = ((double)msg.count_change * 10.0 * 2.0 * 3.1415)/(360.0);
     
-    double error1 = t_W1-est_w1;
-    double error2 = t_W2-est_w2;
+    double error = t_WLeft-est_w;
 
-    errorSum1 += error1;
-    errorSum2 += error2;    
+    errorSumLeft += error;
 
-    ROS_INFO("WlR: %f, B: %f, Kp1: %f, Kp2: %f, Ki1: %f, Ki2: %f", wlR, wheelSeparation, Kp1, Kp2, Ki1, Ki2);
-    ROS_INFO("TW_M1: %f, W_M1: %f, PWM_M1: %f\nTW_M2: %f, W_M2: %f, PWM_M2: %f",
-	 t_W1, est_w1, motor1PWM, t_W2, est_w2, motor2PWM);
+    motorLeftPWM = (motorLeftPWM + KpLeft*error + KiLeft*errorSumLeft*0.1);
 
-    motor1PWM = (motor1PWM + Kp1*error1 + Ki1*errorSum1);
-    motor2PWM = (motor2PWM + Kp2*error2 + Ki2*errorSum2);
+    ROS_INFO("-----------");
+}
+void encoderRightCallback(const phidgets::motor_encoder& msg){
+    ROS_INFO("-----------");
+    ROS_INFO("RIGHT:: E1: %d, E2: %d", msg.count,msg.count_change);
+    
+    double est_w = ((double)msg.count_change * 10.0 * 2.0 * 3.1415)/(360.0);
+    
+    double error = t_WRight-est_w;
 
-    motor1PWM = motor1PWM<255?motor1PWM:255;
-    motor1PWM = motor1PWM>-255?motor1PWM:-255;
-    motor2PWM = motor2PWM<255?motor2PWM:255;
-    motor2PWM = motor2PWM>-255?motor2PWM:-255;
+    errorSumRight += error;
+
+    motorRightPWM = (motorRightPWM + KpRight*error + KiRight*errorSumRight*0.1);
 
     ROS_INFO("-----------");
 }
@@ -83,46 +86,49 @@ void controllerCallback(const geometry_msgs::Twist& msg){
     wl -= (wheelSeparation*msg.angular.z)/(2.0*wlR);
     wr += (wheelSeparation*msg.angular.z)/(2.0*wrR);
 
-//    double wl = ((msg.linear.x)-(wheelSeparation/2)*msg.angular.z)/wlR;
-//    double wr = ((msg.linear.x)+(wheelSeparation/2)*msg.angular.z)/wrR;
+    t_WLeft = wl;
+    t_WRight = -wr;
 
-    t_W1 = wl;
-    t_W2 = wr;
+    ROS_INFO("target Left: %f, target Right: %f",t_WLeft,t_WRight);
 }
 
 int main(int argc, char **argv){
-    ros::init(argc, argv, "motor_controller");
+    ros::init(argc, argv, "rosie_motor_controller");
 
     ros::NodeHandle n;
 
-    std::map<std::string,double> m1_pid, m2_pid;
-    n.getParam("motor_left_pid", m1_pid);
-    n.getParam("motor_right_pid", m2_pid);
+    std::map<std::string,double> mLeft_pid, mRight_pid;
+    n.getParam("motor_left_pid", mLeft_pid);
+    n.getParam("motor_right_pid", mRight_pid);
 
-    Kp1 = m1_pid["Kp"];
-    Ki1 = m1_pid["Ki"];
-    Kp2 = m2_pid["Kp"];
-    Ki2 = m2_pid["Ki"];
+    KpLeft = mLeft_pid["Kp"];
+    KiLeft = mLeft_pid["Ki"];
+    KpRight = mRight_pid["Kp"];
+    KiRight = mRight_pid["Ki"];
 
     n.getParam("wheel_left_radius", wlR);
     n.getParam("wheel_right_radius", wrR);
 
     n.getParam("wheel_separation", wheelSeparation);
 
-    ros::Publisher motor_pub = n.advertise<ras_lab1_msgs::PWM>("/kobuki/pwm",1);
-    ros::Subscriber encoder_sub = n.subscribe("/kobuki/encoders", 1, encodersCallback);
+    ros::Publisher motorLeft_pub = n.advertise<std_msgs::Float32>("/motorLeft/cmd_vel",1);
+    ros::Publisher motorRight_pub = n.advertise<std_msgs::Float32>("/motorRight/cmd_vel",1);
+    ros::Subscriber encoderLeft_sub = n.subscribe("/motorLeft/encoder", 1, encoderLeftCallback);
+    ros::Subscriber encoderRight_sub = n.subscribe("/motorRight/encoder", 1, encoderRightCallback);
     ros::Subscriber controller_sub = n.subscribe("/motor_controller/twist", 1, controllerCallback);
 
     ros::Rate loop_rate(10);
 
     while(ros::ok()){
 
-        ras_lab1_msgs::PWM msg;
+	std_msgs::Float32 motorLPWM;
+	std_msgs::Float32 motorRPWM;
 
-        msg.PWM1 = (int)motor1PWM;
-        msg.PWM2 = (int)motor2PWM;
+        motorLPWM.data = motorLeftPWM;
+        motorRPWM.data = motorRightPWM;
 
-        motor_pub.publish(msg);
+        motorLeft_pub.publish(motorLPWM);
+        motorRight_pub.publish(motorRPWM);
         ros::spinOnce();
         loop_rate.sleep();
     }

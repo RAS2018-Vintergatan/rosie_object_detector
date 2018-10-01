@@ -11,9 +11,11 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <build_depend>roscpp</build_depend>
-  <build_depend>ras_lab1_msgs</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>phidgets</build_depend>
   <build_depend>geometry_msgs</build_depend>
   <run_depend>roscpp</run_depend>
-  <run_depend>ras_lab1_msgs</run_depend>
+  <run_depend>std_msgs</run_depend>
+  <run_depend>phidgets</run_depend>
   <run_depend>geometry_msgs</run_depend>
 </package>
