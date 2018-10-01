@@ -16,7 +16,7 @@ rosrun phidgets motor _serial:=469515 __name:=motorLeft _name:=motorLeft
 rosparam load controller_params.yaml
 ```
 ```
-rosrun rosie\_motor\_controller rosie\_motor\_controller
+rosrun rosie_motor_controller rosie_motor_controller
 ```
 
 **Sending signal to motor controller**
