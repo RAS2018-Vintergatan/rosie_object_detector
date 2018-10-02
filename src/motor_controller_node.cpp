@@ -13,6 +13,9 @@ double KpRight = 1.0;
 double KiLeft = 1.0;
 double KiRight = 1.0;
 
+double KdLeft = 1.0;
+double KdRight = 1.0;
+
 double wlR = 1.0;
 double wrR = 1.0;
 
@@ -38,6 +41,8 @@ int32 count
 int32 count_change
 
 */
+double lastErrorLeft = 0;
+bool leftWheelStuck = false;
 void encoderLeftCallback(const phidgets::motor_encoder& msg){
     ROS_INFO("-----------");
     ROS_INFO("LEFT:: E1: %d, E2: %d", msg.count,msg.count_change);
@@ -47,11 +52,25 @@ void encoderLeftCallback(const phidgets::motor_encoder& msg){
     double error = t_WLeft-est_w;
 
     errorSumLeft += error;
+    double dError = (error-lastErrorLeft)/10;
 
-    motorLeftPWM = (motorLeftPWM + KpLeft*error + KiLeft*errorSumLeft*0.1);
+    //This code resets the accumulated errors of the pid once the motor starts moving
+    if(lastErrorLeft == error){
+	leftWheelStuck = true;
+    }else if(leftWheelStuck){
+	errorSumLeft = 0;
+	dError = 0;
+	leftWheelStuck = false;
+    }
+
+    motorLeftPWM = (motorLeftPWM + KpLeft*error + KiLeft*errorSumLeft*0.1 + KdLeft*dError);
+
+    lastErrorLeft = error;
 
     ROS_INFO("-----------");
 }
+double lastErrorRight = 0;
+bool rightWheelStuck = false;
 void encoderRightCallback(const phidgets::motor_encoder& msg){
     ROS_INFO("-----------");
     ROS_INFO("RIGHT:: E1: %d, E2: %d", msg.count,msg.count_change);
@@ -61,8 +80,20 @@ void encoderRightCallback(const phidgets::motor_encoder& msg){
     double error = t_WRight-est_w;
 
     errorSumRight += error;
+    double dError = (error-lastErrorRight)/10;
 
-    motorRightPWM = (motorRightPWM + KpRight*error + KiRight*errorSumRight*0.1);
+    //This code resets the accumulated errors of the pid once the motor starts moving
+    if(lastErrorRight == error){
+	rightWheelStuck = true;
+    }else if(rightWheelStuck){
+	errorSumRight = 0;
+	dError = 0;
+	rightWheelStuck = false;
+    }
+
+    motorRightPWM = (motorRightPWM + KpRight*error + KiRight*errorSumRight*0.1 + KdRight*dError);
+
+    lastErrorRight = error;
 
     ROS_INFO("-----------");
 }
@@ -103,8 +134,10 @@ int main(int argc, char **argv){
 
     KpLeft = mLeft_pid["Kp"];
     KiLeft = mLeft_pid["Ki"];
+    KdLeft = mRight_pid["Kd"];
     KpRight = mRight_pid["Kp"];
     KiRight = mRight_pid["Ki"];
+    KdRight = mRight_pid["Kd"];
 
     n.getParam("wheel_left_radius", wlR);
     n.getParam("wheel_right_radius", wrR);
