@@ -62,8 +62,8 @@ void encoderLeftCallback(const phidgets::motor_encoder& msg){
 	dError = 0;
 	leftWheelStuck = false;
     }
-
-    motorLeftPWM = (motorLeftPWM + KpLeft*error + KiLeft*errorSumLeft*0.1 + KdLeft*dError);
+  
+    motorLeftPWM = (KpLeft*error + KiLeft*errorSumLeft*0.1 + KdLeft*dError);
 
     lastErrorLeft = error;
 
@@ -75,7 +75,7 @@ void encoderRightCallback(const phidgets::motor_encoder& msg){
     ROS_INFO("-----------");
     ROS_INFO("RIGHT:: E1: %d, E2: %d", msg.count,msg.count_change);
     
-    double est_w = ((double)msg.count_change * 10.0 * 2.0 * 3.1415)/(360.0);
+    double est_w = ((double)msg.count_change * (-1) * 10.0 * 2.0 * 3.1415)/(360.0);
     
     double error = t_WRight-est_w;
 
@@ -91,7 +91,7 @@ void encoderRightCallback(const phidgets::motor_encoder& msg){
 	rightWheelStuck = false;
     }
 
-    motorRightPWM = (motorRightPWM + KpRight*error + KiRight*errorSumRight*0.1 + KdRight*dError);
+    motorRightPWM = (KpRight*error + KiRight*errorSumRight*0.1 + KdRight*dError);
 
     lastErrorRight = error;
 
@@ -118,7 +118,7 @@ void controllerCallback(const geometry_msgs::Twist& msg){
     wr += (wheelSeparation*msg.angular.z)/(2.0*wrR);
 
     t_WLeft = wl;
-    t_WRight = -wr;
+    t_WRight = wr;
 
     ROS_INFO("target Left: %f, target Right: %f",t_WLeft,t_WRight);
 }
