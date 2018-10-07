@@ -62,7 +62,7 @@ void encoderLeftCallback(const phidgets::motor_encoder& msg){
 	dError = 0;
 	leftWheelStuck = false;
     }
-
+  
     motorLeftPWM = (KpLeft*error + KiLeft*errorSumLeft*0.1 + KdLeft*dError);
 
     lastErrorLeft = error;
