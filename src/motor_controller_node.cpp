@@ -42,7 +42,6 @@ int32 count_change
 
 */
 double lastErrorLeft = 0;
-bool leftWheelStuck = false;
 void encoderLeftCallback(const phidgets::motor_encoder& msg){
     ROS_INFO("-----------");
     ROS_INFO("LEFT:: E1: %d, E2: %d", msg.count,msg.count_change);
@@ -53,15 +52,6 @@ void encoderLeftCallback(const phidgets::motor_encoder& msg){
 
     errorSumLeft += error;
     double dError = (error-lastErrorLeft)/10;
-
-    //This code resets the accumulated errors of the pid once the motor starts moving
-    if(lastErrorLeft == error){
-	leftWheelStuck = true;
-    }else if(leftWheelStuck){
-	errorSumLeft = 0;
-	dError = 0;
-	leftWheelStuck = false;
-    }
   
     motorLeftPWM = (KpLeft*error + KiLeft*errorSumLeft*0.1 + KdLeft*dError);
 
@@ -70,26 +60,16 @@ void encoderLeftCallback(const phidgets::motor_encoder& msg){
     ROS_INFO("-----------");
 }
 double lastErrorRight = 0;
-bool rightWheelStuck = false;
 void encoderRightCallback(const phidgets::motor_encoder& msg){
     ROS_INFO("-----------");
     ROS_INFO("RIGHT:: E1: %d, E2: %d", msg.count,msg.count_change);
     
-    double est_w = ((double)msg.count_change * (-1) * 10.0 * 2.0 * 3.1415)/(360.0);
+    double est_w = ((double)msg.count_change * 10.0 * 2.0 * 3.1415)/(360.0);
     
     double error = t_WRight-est_w;
 
     errorSumRight += error;
     double dError = (error-lastErrorRight)/10;
-
-    //This code resets the accumulated errors of the pid once the motor starts moving
-    if(lastErrorRight == error){
-	rightWheelStuck = true;
-    }else if(rightWheelStuck){
-	errorSumRight = 0;
-	dError = 0;
-	rightWheelStuck = false;
-    }
 
     motorRightPWM = (KpRight*error + KiRight*errorSumRight*0.1 + KdRight*dError);
 
@@ -114,11 +94,14 @@ void controllerCallback(const geometry_msgs::Twist& msg){
 
     double wl = msg.linear.x/wlR;
     double wr = msg.linear.x/wrR;
-    wl -= (wheelSeparation*msg.angular.z)/(2.0*wlR);
-    wr += (wheelSeparation*msg.angular.z)/(2.0*wrR);
+    wl += (wheelSeparation*msg.angular.z)/(2.0*wlR);
+    wr -= (wheelSeparation*msg.angular.z)/(2.0*wrR);
 
-    t_WLeft = wl;
-    t_WRight = wr;
+    t_WLeft = -wl;
+    t_WRight = +wr;
+
+    errorSumLeft = 0;
+    errorSumRight = 0;
 
     ROS_INFO("target Left: %f, target Right: %f",t_WLeft,t_WRight);
 }
