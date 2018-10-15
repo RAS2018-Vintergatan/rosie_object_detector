@@ -16,6 +16,7 @@
 #include <pcl/ros/conversions.h>
 #include <boost/foreach.hpp>
 #include <visualization_msgs/Marker.h>
+#include <tf/transform_broadcaster.h>
 //#include <math.h>
 
 
@@ -148,6 +149,14 @@ public:
       //only if using a MESH_RESOURCE marker type:
       marker.mesh_resource = "package://pr2_description/meshes/base_v0/base.dae";
       vis_pub.publish( marker );
+      
+	static tf::TransformBroadcaster br;
+	tf::Transform transform;
+    transform.setOrigin( tf::Vector3(0.06, 0, 0) );
+    tf::Quaternion qtf;
+    qtf.setRPY(0, 0, 0);
+    transform.setRotation( qtf );
+    br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "base_link", marker.header.frame_id));
   }
 
   void imageCb(const sensor_msgs::ImageConstPtr& msg)
