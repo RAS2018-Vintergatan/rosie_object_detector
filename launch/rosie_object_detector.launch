@@ -1,0 +1,9 @@
+<launch>
+	
+	<!-- launch camera -->
+	<include file="$(find realsense_camera)/launch/sr300_nodelet_rgbd.launch" />
+	
+	<!-- run the object detector -->
+	<node pkg="rosie_object_detector" type="rosie_object_detector" name="rosie_object_detector" respawn="true" />
+	
+</launch>
