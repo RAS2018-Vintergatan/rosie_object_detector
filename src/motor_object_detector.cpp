@@ -32,6 +32,7 @@ class ImageConverter
   bool object_detected;
   bool object_dissapeared_prompt;
   bool print_color;
+  int x_factor;
   int sat_low;
   int sat_high;
   int value_low;
@@ -147,12 +148,11 @@ public:
     marker.action = visualization_msgs::Marker::ADD;
     if (object_visible){
         marker.pose.position.x = x_position_object;
-        marker.pose.position.y = y_position_object;
     }
     else {
         marker.pose.position.x = 1e5;
-        marker.pose.position.y = 1e5;
     }
+    marker.pose.position.y = y_position_object;
     marker.pose.position.z = 0.0;
     marker.pose.orientation.x = 0.0;
     marker.pose.orientation.y = 0.0;
@@ -189,6 +189,7 @@ public:
     nh_.getParam("/show_object_detection_threshold_image", show_object_detection_threshold_image);
     nh_.getParam("/print_center_pixel_hue", print_center_pixel_hue);
     nh_.getParam("/print_color", print_color);
+    nh_.getParam("/x_factor", x_factor);
     nh_.getParam("erosion_size", erosion_size);
     nh_.getParam("dilation_size", dilation_size);
     nh_.getParam("/color_interval", color_interval);
@@ -216,7 +217,7 @@ public:
     p.x = m.m10/m.m00;
     p.y = m.m01/m.m00;
 
-    x_position_object = (120e2/p.y - 10)/double(100);
+    x_position_object = (x_factor/p.y - 10)/double(100);
     y_position_object = sin(-1*(p.x - 320)/double(600))*x_position_object;
 
     if (p.x > -1 && p.y > -1) {
