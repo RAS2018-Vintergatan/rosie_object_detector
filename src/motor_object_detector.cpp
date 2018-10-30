@@ -2,29 +2,15 @@
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/image_encodings.h>
-#include <sensor_msgs/PointCloud2.h>
-#include <sensor_msgs/PointCloud.h>
-#include <sensor_msgs/point_cloud_conversion.h>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
-#include <pcl_conversions/pcl_conversions.h>
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
-#include <pcl_ros/point_cloud.h>
-#include <boost/foreach.hpp>
-#include <pcl/io/pcd_io.h>
-#include <pcl/ros/conversions.h>
-#include <boost/foreach.hpp>
 #include <visualization_msgs/Marker.h>
 #include <tf/transform_broadcaster.h>
-//#include <math.h>
 
 
 using namespace cv;
 
 static const std::string OPENCV_WINDOW = "Image window";
-
-
 
 class ImageConverter
 {
@@ -40,6 +26,32 @@ class ImageConverter
   float x_position_object;
   float y_position_object;
   int depthindex;
+  bool show_object_detection_threshold_image;
+  bool print_center_pixel_hue;
+  bool object_detected_prompt;
+  bool object_detected;
+  bool object_dissapeared_prompt;
+  bool print_color;
+  int sat_low;
+  int sat_high;
+  int value_low;
+  int value_high;
+  int color_interval;
+  int hsv_red;
+  int hsv_orange;
+  int hsv_yellow;
+  int hsv_green;
+  int hsv_blue;
+  int hsv_purple;
+  int erosion_elem;
+  int erosion_size;
+  int dilation_elem;
+  int dilation_size;
+  int color;
+  Mat erosion_dst;
+  Mat dilation_dst;
+  cv::Mat ThreshImage;
+  cv::Mat HSVImage;
 
 public:
   ImageConverter()
@@ -47,12 +59,17 @@ public:
   {
     // Subscrive to input video feed and publish output video feed
     image_sub_ = it_.subscribe("/camera/rgb/image_rect_color", 1, &ImageConverter::imageCb, this);
-    image_depth = it_.subscribe("/camera/depth/image_rect", 1, &ImageConverter::DepthImage, this);
-    image_sub_depth = nh_.subscribe("/camera/depth/points", 1,  &ImageConverter::imageCb_depth, this);
+    //image_depth = it_.subscribe("/camera/depth/image_rect", 1, &ImageConverter::DepthImage, this);
+    //image_sub_depth = nh_.subscribe("/camera/depth/points", 1,  &ImageConverter::imageCb_depth, this);
     image_pub_ = it_.advertise("/image_converter/output_video", 1);
     p.x = 0;
     p.y = 0;
-    cv::namedWindow(OPENCV_WINDOW);
+    erosion_elem = 0;
+    dilation_elem = 0;
+    object_detected_prompt = false;
+    object_detected = false;
+    object_dissapeared_prompt = false;
+    //cv::namedWindow(OPENCV_WINDOW);
   }
 
   ~ImageConverter()
@@ -60,107 +77,127 @@ public:
     cv::destroyWindow(OPENCV_WINDOW);
   }
 
-  void DepthImage(const sensor_msgs::ImageConstPtr& msg)
+  void Erosion( int, void* )
   {
-      //printf("The encoding is %s", msg->encoding);
-      if (msg->encoding == sensor_msgs::image_encodings::TYPE_32FC1)
-      {
-         const float *depth_array = reinterpret_cast<const float*>(&(msg->data[0]));
-         //printf("The depth of the 0th pixel is:\t %f \n", *depth_array);
+    int erosion_type;
+    if( erosion_elem == 0 ){ erosion_type = MORPH_RECT; }
+    else if( erosion_elem == 1 ){ erosion_type = MORPH_CROSS; }
+    else if( erosion_elem == 2) { erosion_type = MORPH_ELLIPSE; }
+
+    Mat element = getStructuringElement( erosion_type,
+                                         Size( 2*erosion_size + 1, 2*erosion_size+1 ),
+                                         Point( erosion_size, erosion_size ) );
+
+    /// Apply the erosion operation
+    erode( ThreshImage, erosion_dst, element );
+  }
+
+  void Dilation( int, void* )
+  {
+    int dilation_type;
+    if( dilation_elem == 0 ){ dilation_type = MORPH_RECT; }
+    else if( dilation_elem == 1 ){ dilation_type = MORPH_CROSS; }
+    else if( dilation_elem == 2) { dilation_type = MORPH_ELLIPSE; }
+
+    Mat element = getStructuringElement( dilation_type,
+                                         Size( 2*dilation_size + 1, 2*dilation_size+1 ),
+                                         Point( dilation_size, dilation_size ) );
+    /// Apply the dilation operation
+    dilate( erosion_dst, dilation_dst, element );
+  }
+
+  void pixel_color(){
+      Vec3b intensity = HSVImage.at<Vec3b>(p.y,p.x);
+      uchar hue = intensity.val[0];
+
+      if (hue < hsv_red + color_interval && hue > hsv_red - color_interval) {
+          color = 1;
       }
-
-
+      else if (hue < hsv_orange + color_interval && hue > hsv_orange - color_interval) {
+          color = 2;
+      }
+      else if (hue < hsv_yellow + color_interval && hue > hsv_yellow - color_interval) {
+          color = 3;
+      }
+      else if (hue < hsv_green + color_interval && hue > hsv_green - color_interval) {
+          color = 4;
+      }
+      else if (hue < hsv_blue + color_interval && hue > hsv_blue - color_interval) {
+          color = 5;
+      }
+      else if (hue < hsv_purple + color_interval && hue > hsv_purple - color_interval) {
+          color = 6;
+      }
+      else {
+          color = 0;
+          ROS_WARN("No color detected. Might have to adjust sat and value and/or hsv color values and color interval in object_detector_params.yaml");
+      }
+      if (print_color){
+      ROS_INFO("Color: %d", color);
+      }
   }
 
-  void imageCb_depth(const sensor_msgs::PointCloud2ConstPtr& msg)
+  void publish_test(bool object_visible)
   {
-      //BOOST_FOREACH (const pcl::PointXYZ& pt, msg->data)
-      //printf ("\t(%f, %f, %f)\n", pt.x, pt.y, pt.z);
+    marker.header.frame_id = "camera_depth_frame";
+    marker.header.stamp = ros::Time();
+    marker.ns = "my_namespace";
+    marker.id = 0;
+    marker.type = visualization_msgs::Marker::SPHERE;
+    marker.action = visualization_msgs::Marker::ADD;
+    if (object_visible){
+        marker.pose.position.x = x_position_object;
+        marker.pose.position.y = y_position_object;
+    }
+    else {
+        marker.pose.position.x = 1e5;
+        marker.pose.position.y = 1e5;
+    }
+    marker.pose.position.z = 0.0;
+    marker.pose.orientation.x = 0.0;
+    marker.pose.orientation.y = 0.0;
+    marker.pose.orientation.z = 0.0;
+    marker.pose.orientation.w = 1.0;
+    marker.scale.x = 0.1;
+    marker.scale.y = 0.1;
+    marker.scale.z = 0.1;
 
-      int width = msg->width;
-      int height = msg->height;
+    marker.color.a = 1.0; // Don't forget to set the alpha!
+    marker.color.r = 1.0;
+    marker.color.g = 0.0;
+    marker.color.b = 0.0;
 
-      //printf("\t %d %d \n", width, height);
-
-      pcl::PointCloud<pcl::PointXYZ> input_;
-      pcl::fromROSMsg(*msg, input_);
-      //pcl::PointXYZ pt = input_[200];
-      //printf ("\t(%f, %f, %f)\n", pt.x, pt.y, pt.z);
-      int ct = 0;
-      BOOST_FOREACH (const pcl::PointXYZ& pt, input_.points)
-        //printf ("\t(%f, %f, %f)\n", pt.x, pt.y, pt.z);
-              ct++;
-      //printf("\t %d \n", ct);
-  }
-
-  void pixelTo3DPoint(const sensor_msgs::PointCloud2ConstPtr& pCloud, const int u, const int v)
-  {
-    // get width and height of 2D point cloud data
-    int width = pCloud->width;
-    int height = pCloud->height;
-
-    // Convert from u (column / width), v (row/height) to position in array
-    // where X,Y,Z data starts
-    int arrayPosition = v*pCloud->row_step + u*pCloud->point_step;
-
-    // compute position in array where x,y,z data start
-    int arrayPosX = arrayPosition + pCloud->fields[0].offset; // X has an offset of 0
-    int arrayPosY = arrayPosition + pCloud->fields[1].offset; // Y has an offset of 4
-    int arrayPosZ = arrayPosition + pCloud->fields[2].offset; // Z has an offset of 8
-
-    float X = 0.0;
-    float Y = 0.0;
-    float Z = 0.0;
-
-    memcpy(&X, &pCloud->data[arrayPosX], sizeof(float));
-    memcpy(&Y, &pCloud->data[arrayPosY], sizeof(float));
-    memcpy(&Z, &pCloud->data[arrayPosZ], sizeof(float));
-
-    //ROS_INFO("%f, %f, %f", X, Y, Z);
-
-  //  p.x = X;
-  //  p.y = Y;
-  //  p.z = Z;
-
-  }
-
-  void publish_test()
-  {
-      marker.header.frame_id = "camera_depth_frame";
-      marker.header.stamp = ros::Time();
-      marker.ns = "my_namespace";
-      marker.id = 0;
-      marker.type = visualization_msgs::Marker::SPHERE;
-      marker.action = visualization_msgs::Marker::ADD;
-      marker.pose.position.x = x_position_object;
-      marker.pose.position.y = y_position_object;
-      marker.pose.position.z = 0.05;
-      marker.pose.orientation.x = 0.0;
-      marker.pose.orientation.y = 0.0;
-      marker.pose.orientation.z = 0.0;
-      marker.pose.orientation.w = 1.0;
-      marker.scale.x = 0.1;
-      marker.scale.y = 0.1;
-      marker.scale.z = 0.1;
-      marker.color.a = 1.0; // Don't forget to set the alpha!
-      marker.color.r = 0.0;
-      marker.color.g = 1.0;
-      marker.color.b = 0.0;
-      //only if using a MESH_RESOURCE marker type:
-      marker.mesh_resource = "package://pr2_description/meshes/base_v0/base.dae";
-      vis_pub.publish( marker );
+    //only if using a MESH_RESOURCE marker type:
+    marker.mesh_resource = "package://pr2_description/meshes/base_v0/base.dae";
+    vis_pub.publish( marker );
       
-	static tf::TransformBroadcaster br;
-	tf::Transform transform;
+    static tf::TransformBroadcaster br;
+    tf::Transform transform;
     transform.setOrigin( tf::Vector3(0.06, 0, 0) );
     tf::Quaternion qtf;
     qtf.setRPY(0, 0, 0);
     transform.setRotation( qtf );
     br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "base_link", marker.header.frame_id));
-  }
+    }
 
   void imageCb(const sensor_msgs::ImageConstPtr& msg)
   {
+    nh_.getParam("/sat_low", sat_low);
+    nh_.getParam("/sat_high", sat_high);
+    nh_.getParam("/value_low", value_low);
+    nh_.getParam("/value_high", value_high);
+    nh_.getParam("/show_object_detection_threshold_image", show_object_detection_threshold_image);
+    nh_.getParam("/print_center_pixel_hue", print_center_pixel_hue);
+    nh_.getParam("/print_color", print_color);
+    nh_.getParam("erosion_size", erosion_size);
+    nh_.getParam("dilation_size", dilation_size);
+    nh_.getParam("/color_interval", color_interval);
+    nh_.getParam("/hsv_red", hsv_red);
+    nh_.getParam("/hsv_orange", hsv_orange);
+    nh_.getParam("/hsv_yellow", hsv_yellow);
+    nh_.getParam("/hsv_green", hsv_green);
+    nh_.getParam("/hsv_blue", hsv_blue);
+    nh_.getParam("/hsv_purple", hsv_purple);
     cv_bridge::CvImagePtr cv_ptr;
     try
     {
@@ -171,38 +208,57 @@ public:
       ROS_ERROR("cv_bridge exception: %s", e.what());
       return;
     }
-
-    // Draw an example circle on the video stream
-    //if (cv_ptr->image.rows > 60 && cv_ptr->image.cols > 60)
-    //  cv::circle(cv_ptr->image, cv::Point(50, 50), 10, CV_RGB(255,0,0));
-
-    cv::Mat HSVImage;
-    cv::Mat ThreshImage;
     cvtColor(cv_ptr->image,HSVImage,CV_BGR2HSV);
-    inRange(HSVImage,cv::Scalar(90,150,100),cv::Scalar(100,255,255),ThreshImage);
-    cv::Moments m = moments(ThreshImage,true);
+    inRange(HSVImage,cv::Scalar(0,sat_low,value_low),cv::Scalar(255,sat_high,value_high),ThreshImage);
+    Erosion(0,0);
+    Dilation(0,0);
+    cv::Moments m = moments(dilation_dst,true);
     p.x = m.m10/m.m00;
     p.y = m.m01/m.m00;
 
-    // Naive x and y position calculations
     x_position_object = (120e2/p.y - 10)/double(100);
     y_position_object = sin(-1*(p.x - 320)/double(600))*x_position_object;
-    publish_test();
-    //ROS_INFO("The [x, y] coordinate of the object: [%f, %f]", x_position_object, y_position_object);
-    // End of naive x and y position calculations
 
-//    ROS_INFO("Point coordinate %d, %d", p.x, p.y);
+    if (p.x > -1 && p.y > -1) {
+        object_detected = true;
+        if (object_dissapeared_prompt) {
+            object_detected_prompt = false;
+            object_dissapeared_prompt = false;
+        }
+        if (!object_detected_prompt){
+            object_detected_prompt = true;
+            ROS_INFO("Object detected!");
+        }
+    }
+    else {
+            object_detected = false;
+    }
+    if (object_detected) {
+        if (print_center_pixel_hue){
+            Vec3b intensity = HSVImage.at<Vec3b>(p.y,p.x);
+            uchar hue = intensity.val[0];
+            ROS_INFO("Center pixel hue: %d", hue);
+        }
+        pixel_color();
+        publish_test(true);
+    }
+    else {
+        if (object_detected_prompt && !object_dissapeared_prompt){
+            object_dissapeared_prompt = true;
+            ROS_INFO("Object dissapeared!");
+        }
+        publish_test(false);
+    }
 
-    circle(ThreshImage, p, 5, cv::Scalar(128,0,0), -1);
-    cv::imshow("Image with center",ThreshImage);
-
-    // Update GUI Window
-
-    //cv::imshow(OPENCV_WINDOW, ThreshImage);
+    circle(dilation_dst, p, 5, cv::Scalar(128,0,0), -1);
+    if (show_object_detection_threshold_image){
+        //cv::imshow("Image with center",ThreshImage);
+        cv::imshow("Image with center",dilation_dst);
+    }
     cv::waitKey(3);
 
     // Output modified video stream
-    image_pub_.publish(cv_ptr->toImageMsg());
+    //image_pub_.publish(cv_ptr->toImageMsg());
   }
 
 
