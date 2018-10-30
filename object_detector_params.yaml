@@ -1,0 +1,17 @@
+show_object_detection_threshold_image: true
+print_center_pixel_hue: false
+print_color: true
+sat_low: 170
+sat_high: 255
+value_low: 100
+value_high: 255
+erosion_size: 6
+dilation_size: 5
+color_interval: 5
+hsv_red: 0
+hsv_orange: 10
+hsv_yellow: 25
+hsv_green: 50
+hsv_blue: 95
+hsv_purple: 110
+
