@@ -1,6 +1,7 @@
 show_object_detection_threshold_image: true
 print_center_pixel_hue: false
-print_color: true
+print_color: false
+x_factor: 12000
 sat_low: 170
 sat_high: 255
 value_low: 100
