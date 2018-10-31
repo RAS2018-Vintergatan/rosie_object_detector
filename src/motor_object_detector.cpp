@@ -33,26 +33,32 @@ class ImageConverter
   bool object_dissapeared_prompt;
   bool print_color;
   int x_factor;
+  int hue;
+  int hue_interval;
   int sat_low;
   int sat_high;
   int value_low;
   int value_high;
   int color_interval;
-  int hsv_red;
-  int hsv_orange;
-  int hsv_yellow;
-  int hsv_green;
-  int hsv_blue;
-  int hsv_purple;
+  int hsv_red, hsv_red_interval;
+  int hsv_orange, hsv_orange_interval;
+  int hsv_yellow, hsv_yellow_interval, yellow_sat_low, yellow_value_low;
+  int hsv_light_green, hsv_light_green_interval;
+  int hsv_dark_green, hsv_dark_green_interval;
+  int hsv_blue, hsv_blue_interval;
+  int hsv_purple, hsv_purple_interval;
   int erosion_elem;
   int erosion_size;
   int dilation_elem;
   int dilation_size;
   int color;
+  int color_index;
   Mat erosion_dst;
   Mat dilation_dst;
   cv::Mat ThreshImage;
   cv::Mat HSVImage;
+  bool check_all_colors;
+  int color_index_detected;
 
 public:
   ImageConverter()
@@ -107,34 +113,69 @@ public:
     dilate( erosion_dst, dilation_dst, element );
   }
 
-  void pixel_color(){
-      Vec3b intensity = HSVImage.at<Vec3b>(p.y,p.x);
-      uchar hue = intensity.val[0];
+//  void pixel_color(){
+//      Vec3b intensity = HSVImage.at<Vec3b>(p.y,p.x);
+//      uchar hue = intensity.val[0];
 
-      if (hue < hsv_red + color_interval && hue > hsv_red - color_interval) {
-          color = 1;
+//      if (hue < hsv_red + color_interval && hue > hsv_red - color_interval) {
+//          color = 1;
+//      }
+//      else if (hue < hsv_orange + color_interval && hue > hsv_orange - color_interval) {
+//          color = 2;
+//      }
+//      else if (hue < hsv_yellow + color_interval && hue > hsv_yellow - color_interval) {
+//          color = 3;
+//      }
+//      else if (hue < hsv_green + color_interval && hue > hsv_green - color_interval) {
+//          color = 4;
+//      }
+//      else if (hue < hsv_blue + color_interval && hue > hsv_blue - color_interval) {
+//          color = 5;
+//      }
+//      else if (hue < hsv_purple + color_interval && hue > hsv_purple - color_interval) {
+//          color = 6;
+//      }
+//      else {
+//          color = 0;
+//          ROS_WARN("No color detected. Might have to adjust sat and value and/or hsv color values and color interval in object_detector_params.yaml");
+//      }
+//      if (print_color){
+//      ROS_INFO("Color: %d", color);
+//      }
+//  }
+
+  void color_selector(){
+      if (color_index == 0) {
+          hue = hsv_red;
+          hue_interval = hsv_red_interval;
       }
-      else if (hue < hsv_orange + color_interval && hue > hsv_orange - color_interval) {
-          color = 2;
+      else if (color_index == 1){
+          hue = hsv_orange;
+          hue_interval = hsv_orange_interval;
+          sat_low = yellow_sat_low;
+          value_low = yellow_value_low;
       }
-      else if (hue < hsv_yellow + color_interval && hue > hsv_yellow - color_interval) {
-          color = 3;
+      else if (color_index == 2){
+          hue = hsv_yellow;
+          hue_interval = hsv_yellow_interval;
+          sat_low = yellow_sat_low;
+          value_low = yellow_value_low;
       }
-      else if (hue < hsv_green + color_interval && hue > hsv_green - color_interval) {
-          color = 4;
+      else if (color_index == 3){
+          hue = hsv_light_green;
+          hue_interval = hsv_light_green_interval;
       }
-      else if (hue < hsv_blue + color_interval && hue > hsv_blue - color_interval) {
-          color = 5;
+      else if (color_index == 4){
+          hue = hsv_dark_green;
+          hue_interval = hsv_dark_green_interval;
       }
-      else if (hue < hsv_purple + color_interval && hue > hsv_purple - color_interval) {
-          color = 6;
+      else if (color_index == 5){
+          hue = hsv_blue;
+          hue_interval = hsv_blue_interval;
       }
-      else {
-          color = 0;
-          ROS_WARN("No color detected. Might have to adjust sat and value and/or hsv color values and color interval in object_detector_params.yaml");
-      }
-      if (print_color){
-      ROS_INFO("Color: %d", color);
+      else if (color_index == 6){
+          hue = hsv_purple;
+          hue_interval = hsv_purple_interval;
       }
   }
 
@@ -163,9 +204,32 @@ public:
     marker.scale.z = 0.1;
 
     marker.color.a = 1.0; // Don't forget to set the alpha!
-    marker.color.r = 1.0;
+    marker.color.r = 0.0;
     marker.color.g = 0.0;
     marker.color.b = 0.0;
+
+    if (color == 1){
+        marker.color.r = 1.0;
+    }
+    else if (color == 2){
+        marker.color.r = 1.0;
+        marker.color.g = 0.6;
+    }
+    else if (color == 3) {
+        marker.color.r = 1.0;
+        marker.color.g = 0.9;
+        marker.color.b = 0.1;
+    }
+    else if (color == 4){
+        marker.color.g = 1.0;
+    }
+    else if (color == 5){
+        marker.color.b = 1.0;
+    }
+    else if (color == 6){
+        marker.color.r = 0.6;
+        marker.color.b = 1.0;
+    }
 
     //only if using a MESH_RESOURCE marker type:
     marker.mesh_resource = "package://pr2_description/meshes/base_v0/base.dae";
@@ -180,10 +244,66 @@ public:
     br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "base_link", marker.header.frame_id));
     }
 
+  void color_checker(){
+      color_selector();
+      inRange(HSVImage,cv::Scalar(hue - hue_interval,sat_low,value_low),cv::Scalar(hue + hue_interval,sat_high,value_high),ThreshImage);
+      Erosion(0,0);
+      Dilation(0,0);
+      cv::Moments m = moments(dilation_dst,true);
+      p.x = m.m10/m.m00;
+      p.y = m.m01/m.m00;
+
+      x_position_object = (x_factor/p.y - 10)/double(100);
+      y_position_object = sin(-1*(p.x - 320)/double(600))*x_position_object;
+
+      if (p.x > -1 && p.y > -1) {
+          object_detected = true;
+          if (object_dissapeared_prompt) {
+              object_detected_prompt = false;
+              object_dissapeared_prompt = false;
+          }
+          if (!object_detected_prompt){
+              object_detected_prompt = true;
+              ROS_INFO("Object detected!");
+          }
+      }
+      else {
+              object_detected = false;
+      }
+      if (object_detected) {
+          if (print_center_pixel_hue){
+              Vec3b intensity = HSVImage.at<Vec3b>(p.y,p.x);
+              uchar hue = intensity.val[0];
+              ROS_INFO("Center pixel hue: %d", hue);
+          }
+          //pixel_color();
+          publish_test(true);
+      }
+      else {
+          if (object_detected_prompt && !object_dissapeared_prompt){
+              object_dissapeared_prompt = true;
+              ROS_INFO("Object dissapeared!");
+          }
+          publish_test(false);
+      }
+
+      circle(dilation_dst, p, 5, cv::Scalar(128,0,0), -1);
+      if (show_object_detection_threshold_image){
+          //cv::imshow("Image with center",ThreshImage);
+          cv::imshow("Image with center",dilation_dst);
+      }
+      cv::waitKey(3);
+
+      // Output modified video stream
+      //image_pub_.publish(cv_ptr->toImageMsg());
+  }
+
   void imageCb(const sensor_msgs::ImageConstPtr& msg)
   {
     nh_.getParam("/sat_low", sat_low);
     nh_.getParam("/sat_high", sat_high);
+    nh_.getParam("/hue", hue);
+    nh_.getParam("/hue_interval", hue_interval);
     nh_.getParam("/value_low", value_low);
     nh_.getParam("/value_high", value_high);
     nh_.getParam("/show_object_detection_threshold_image", show_object_detection_threshold_image);
@@ -196,9 +316,22 @@ public:
     nh_.getParam("/hsv_red", hsv_red);
     nh_.getParam("/hsv_orange", hsv_orange);
     nh_.getParam("/hsv_yellow", hsv_yellow);
-    nh_.getParam("/hsv_green", hsv_green);
+    nh_.getParam("/hsv_light_green", hsv_light_green);
+    nh_.getParam("/hsv_dark_green", hsv_dark_green);
     nh_.getParam("/hsv_blue", hsv_blue);
     nh_.getParam("/hsv_purple", hsv_purple);
+    nh_.getParam("/hsv_red_interval", hsv_red_interval);
+    nh_.getParam("/hsv_orange_interval", hsv_orange_interval);
+    nh_.getParam("/hsv_yellow_interval", hsv_yellow_interval);
+    nh_.getParam("/hsv_light_green_interval", hsv_light_green_interval);
+    nh_.getParam("/hsv_dark_green_interval", hsv_dark_green_interval);
+    nh_.getParam("/hsv_blue_interval", hsv_blue_interval);
+    nh_.getParam("/hsv_purple_interval", hsv_purple_interval);
+    nh_.getParam("/yellow_sat_low", yellow_sat_low);
+    nh_.getParam("/yellow_value_low", yellow_value_low);
+    nh_.getParam("/color_index", color_index);
+    nh_.getParam("/check_all_colors", check_all_colors);
+
     cv_bridge::CvImagePtr cv_ptr;
     try
     {
@@ -210,56 +343,24 @@ public:
       return;
     }
     cvtColor(cv_ptr->image,HSVImage,CV_BGR2HSV);
-    inRange(HSVImage,cv::Scalar(0,sat_low,value_low),cv::Scalar(255,sat_high,value_high),ThreshImage);
-    Erosion(0,0);
-    Dilation(0,0);
-    cv::Moments m = moments(dilation_dst,true);
-    p.x = m.m10/m.m00;
-    p.y = m.m01/m.m00;
 
-    x_position_object = (x_factor/p.y - 10)/double(100);
-    y_position_object = sin(-1*(p.x - 320)/double(600))*x_position_object;
-
-    if (p.x > -1 && p.y > -1) {
-        object_detected = true;
-        if (object_dissapeared_prompt) {
-            object_detected_prompt = false;
-            object_dissapeared_prompt = false;
-        }
-        if (!object_detected_prompt){
-            object_detected_prompt = true;
-            ROS_INFO("Object detected!");
-        }
+    if (object_detected && check_all_colors) {
+        color_index = color_index_detected;
+        color_checker();
     }
+    else if (check_all_colors){
+        color_index = 0;
+        while (color_index < 6 && !object_detected){
+            color_checker();
+            if (object_detected){
+                color_index_detected = color_index;
+            }
+            color_index++;
+        }
+     }
     else {
-            object_detected = false;
+        color_checker();
     }
-    if (object_detected) {
-        if (print_center_pixel_hue){
-            Vec3b intensity = HSVImage.at<Vec3b>(p.y,p.x);
-            uchar hue = intensity.val[0];
-            ROS_INFO("Center pixel hue: %d", hue);
-        }
-        pixel_color();
-        publish_test(true);
-    }
-    else {
-        if (object_detected_prompt && !object_dissapeared_prompt){
-            object_dissapeared_prompt = true;
-            ROS_INFO("Object dissapeared!");
-        }
-        publish_test(false);
-    }
-
-    circle(dilation_dst, p, 5, cv::Scalar(128,0,0), -1);
-    if (show_object_detection_threshold_image){
-        //cv::imshow("Image with center",ThreshImage);
-        cv::imshow("Image with center",dilation_dst);
-    }
-    cv::waitKey(3);
-
-    // Output modified video stream
-    //image_pub_.publish(cv_ptr->toImageMsg());
   }
 
 
@@ -268,6 +369,7 @@ public:
 int main(int argc, char** argv)
 {
   ros::init(argc, argv, "image_converter");
+
   ImageConverter ic;
   ros::spin();
   return 0;
