@@ -1,18 +1,42 @@
 show_object_detection_threshold_image: true
-print_center_pixel_hue: false
+print_center_pixel_hue: true
 print_color: false
 x_factor: 12000
-sat_low: 170
+erosion_size: 10
+dilation_size: 10
+
+check_all_colors: true
+color_index: 1
+
+hue: 127
+hue_interval: 127
+sat_low: 50
 sat_high: 255
-value_low: 100
+value_low: 50
 value_high: 255
-erosion_size: 6
-dilation_size: 5
+
 color_interval: 5
-hsv_red: 0
-hsv_orange: 10
-hsv_yellow: 25
-hsv_green: 50
-hsv_blue: 95
-hsv_purple: 110
+
+hsv_red: 3
+hsv_red_interval: 3
+
+hsv_orange: 8
+hsv_orange_interval: 2
+
+hsv_yellow: 17
+hsv_yellow_interval: 3
+yellow_sat_low: 150
+yellow_value_low: 100
+
+hsv_light_green: 50
+hsv_light_green_interval: 10
+
+hsv_dark_green: 71
+hsv_dark_green_interval: 10
+
+hsv_blue: 97
+hsv_blue_interval: 20
+
+hsv_purple: 150
+hsv_purple_interval: 20
 
