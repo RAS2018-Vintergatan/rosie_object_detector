@@ -1,0 +1,7 @@
+ball
+cube
+cylinder
+plus
+square
+star
+triangle
