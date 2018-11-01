@@ -21,6 +21,7 @@ class ImageConverter
   ros::Subscriber image_sub_depth;
   image_transport::Publisher image_pub_;
   ros::Publisher vis_pub = nh_.advertise<visualization_msgs::Marker>( "visualization_marker", 0 );
+  ros::Publisher vis_pub_bat = nh_.advertise<visualization_msgs::Marker>( "visualization_marker_battery", 0 );
   visualization_msgs::Marker marker;
   cv::Point p;
   float x_position_object;
@@ -28,9 +29,8 @@ class ImageConverter
   int depthindex;
   bool show_object_detection_threshold_image;
   bool print_center_pixel_hue;
-  bool object_detected_prompt;
-  bool object_detected;
-  bool object_dissapeared_prompt;
+  bool object_detected_prompt, object_detected, object_dissapeared_prompt;
+  bool battery_detected_prompt, battery_detected, battery_dissapeared_prompt;
   bool print_color;
   int x_factor;
   int hue;
@@ -47,6 +47,7 @@ class ImageConverter
   int hsv_dark_green, hsv_dark_green_interval;
   int hsv_blue, hsv_blue_interval;
   int hsv_purple, hsv_purple_interval;
+  int hsv_battery_hue, hsv_battery_hue_interval, hsv_battery_sat_low, hsv_battery_sat_high, hsv_battery_value_low, hsv_battery_value_high;
   int erosion_elem;
   int erosion_size;
   int dilation_elem;
@@ -59,6 +60,7 @@ class ImageConverter
   cv::Mat HSVImage;
   bool check_all_colors;
   int color_index_detected;
+  double sleep_duration;
 
 public:
   ImageConverter()
@@ -177,6 +179,14 @@ public:
           hue = hsv_purple;
           hue_interval = hsv_purple_interval;
       }
+      else if (color_index == 7){
+          hue = hsv_battery_hue;
+          hue_interval = hsv_battery_hue_interval;
+          sat_low = hsv_battery_sat_low;
+          sat_high = hsv_battery_sat_high;
+          value_low = hsv_battery_value_low;
+          value_high = hsv_battery_value_high;
+      }
   }
 
   void publish_test(bool object_visible)
@@ -208,32 +218,42 @@ public:
     marker.color.g = 0.0;
     marker.color.b = 0.0;
 
-    if (color == 1){
+    if (color_index == 0){
         marker.color.r = 1.0;
     }
-    else if (color == 2){
+    else if (color_index == 1){
         marker.color.r = 1.0;
         marker.color.g = 0.6;
     }
-    else if (color == 3) {
+    else if (color_index == 2) {
         marker.color.r = 1.0;
         marker.color.g = 0.9;
         marker.color.b = 0.1;
     }
-    else if (color == 4){
+    else if (color_index == 3 || color_index == 4){
         marker.color.g = 1.0;
     }
-    else if (color == 5){
+    else if (color_index == 5){
         marker.color.b = 1.0;
     }
-    else if (color == 6){
+    else if (color_index == 6){
         marker.color.r = 0.6;
         marker.color.b = 1.0;
+    }
+    else if (color_index == 7){
+        marker.color.r = 0.0;
+        marker.color.g = 0.0;
+        marker.color.b = 0.0;
     }
 
     //only if using a MESH_RESOURCE marker type:
     marker.mesh_resource = "package://pr2_description/meshes/base_v0/base.dae";
-    vis_pub.publish( marker );
+    if (color_index == 7){
+        vis_pub_bat.publish( marker );
+    }
+    else {
+        vis_pub.publish( marker );
+    }
       
     static tf::TransformBroadcaster br;
     tf::Transform transform;
@@ -256,35 +276,75 @@ public:
       x_position_object = (x_factor/p.y - 10)/double(100);
       y_position_object = sin(-1*(p.x - 320)/double(600))*x_position_object;
 
-      if (p.x > -1 && p.y > -1) {
-          object_detected = true;
-          if (object_dissapeared_prompt) {
-              object_detected_prompt = false;
-              object_dissapeared_prompt = false;
+      // Normal object
+      if (color_index != 7)
+      {
+          if (p.x > -1 && p.y > -1) {
+              object_detected = true;
+              if (object_dissapeared_prompt) {
+                  object_detected_prompt = false;
+                  object_dissapeared_prompt = false;
+              }
+              if (!object_detected_prompt){
+                  object_detected_prompt = true;
+                  ROS_INFO("Object detected!");
+              }
           }
-          if (!object_detected_prompt){
-              object_detected_prompt = true;
-              ROS_INFO("Object detected!");
-          }
-      }
-      else {
+          else {
               object_detected = false;
-      }
-      if (object_detected) {
-          if (print_center_pixel_hue){
-              Vec3b intensity = HSVImage.at<Vec3b>(p.y,p.x);
-              uchar hue = intensity.val[0];
-              ROS_INFO("Center pixel hue: %d", hue);
           }
-          //pixel_color();
-          publish_test(true);
+          if (object_detected) {
+              if (print_center_pixel_hue){
+                  Vec3b intensity = HSVImage.at<Vec3b>(p.y,p.x);
+                  uchar hue = intensity.val[0];
+                  uchar sat = intensity.val[1];
+                  uchar value = intensity.val[2];
+                  ROS_INFO("Center pixel hue: %d, sat: %d, value: %d", hue, sat, value);
+              }
+              //pixel_color();
+              publish_test(true);
+          }
+          else {
+              if (object_detected_prompt && !object_dissapeared_prompt){
+                  object_dissapeared_prompt = true;
+                  ROS_INFO("Object dissapeared!");
+              }
+              publish_test(false);
+          }
       }
       else {
-          if (object_detected_prompt && !object_dissapeared_prompt){
-              object_dissapeared_prompt = true;
-              ROS_INFO("Object dissapeared!");
+          if (p.x > -1 && p.y > -1) {
+              battery_detected = true;
+              if (battery_dissapeared_prompt) {
+                  battery_detected_prompt = false;
+                  battery_dissapeared_prompt = false;
+              }
+              if (!battery_detected_prompt){
+                  battery_detected_prompt = true;
+                  ROS_INFO("Battery detected!");
+              }
           }
-          publish_test(false);
+          else {
+              battery_detected = false;
+          }
+          if (battery_detected) {
+              if (print_center_pixel_hue){
+                  Vec3b intensity = HSVImage.at<Vec3b>(p.y,p.x);
+                  uchar hue = intensity.val[0];
+                  uchar sat = intensity.val[1];
+                  uchar value = intensity.val[2];
+                  ROS_INFO("Center pixel hue: %d, sat: %d, value: %d", hue, sat, value);
+              }
+              //pixel_color();
+              publish_test(true);
+          }
+          else {
+              if (battery_detected_prompt && !battery_dissapeared_prompt){
+                  battery_dissapeared_prompt = true;
+                  ROS_INFO("Battery dissapeared!");
+              }
+              publish_test(false);
+          }
       }
 
       circle(dilation_dst, p, 5, cv::Scalar(128,0,0), -1);
@@ -332,6 +392,15 @@ public:
     nh_.getParam("/color_index", color_index);
     nh_.getParam("/check_all_colors", check_all_colors);
 
+    nh_.getParam("/hsv_battery_hue", hsv_battery_hue);
+    nh_.getParam("/hsv_battery_hue_interval", hsv_battery_hue_interval);
+    nh_.getParam("/hsv_battery_sat_low", hsv_battery_sat_low);
+    nh_.getParam("/hsv_battery_sat_high", hsv_battery_sat_high);
+    nh_.getParam("/hsv_battery_value_low", hsv_battery_value_low);
+    nh_.getParam("/hsv_battery_value_high", hsv_battery_value_high);
+    nh_.getParam("/sleep_duration_object_detector", sleep_duration);
+
+
     cv_bridge::CvImagePtr cv_ptr;
     try
     {
@@ -355,12 +424,17 @@ public:
             if (object_detected){
                 color_index_detected = color_index;
             }
+            ros::Duration(sleep_duration).sleep();
             color_index++;
         }
      }
     else {
         color_checker();
     }
+    // Battery check
+    color_index = 7;
+    color_checker();
+    ros::Duration(sleep_duration).sleep();
   }
 
 
