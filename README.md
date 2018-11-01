@@ -15,4 +15,5 @@ object_detector_params.yaml
 rosrun rosie_object_detector rosie_object_detector
 
 ## For rviz 
-In rviz add a marker and use topic "visualization_marker" (should be the standard).
+In rviz, for object marker, add a marker and use topic "visualization_marker" (should be the standard).
+For a battery marker, add a marker and use topic "visualization_marker_battery"
