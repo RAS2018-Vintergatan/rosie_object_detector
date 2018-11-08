@@ -1,13 +1,14 @@
 show_object_detection_threshold_image: false
+show_battery_detection_threshold_image: false
 print_center_pixel_hue: false
-print_color: false
-sleep_duration_object_detector: 1
+print_color: true
+sleep_duration_object_detector: 0.0
 x_factor: 12000
 erosion_size: 10
-dilation_size: 10
+dilation_size: 0
 
 check_all_colors: true
-color_index: 6
+color_index: 0
 
 hue: 127
 hue_interval: 127
@@ -18,10 +19,10 @@ value_high: 255
 
 color_interval: 5
 
-hsv_red: 3
-hsv_red_interval: 3
+hsv_red: 2
+hsv_red_interval: 2
 
-hsv_orange: 8
+hsv_orange: 7
 hsv_orange_interval: 2
 
 hsv_yellow: 17
@@ -29,7 +30,7 @@ hsv_yellow_interval: 3
 yellow_sat_low: 150
 yellow_value_low: 100
 
-hsv_light_green: 50
+hsv_light_green: 45
 hsv_light_green_interval: 10
 
 hsv_dark_green: 71
