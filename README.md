@@ -17,3 +17,25 @@ rosrun rosie_object_detector rosie_object_detector
 ## For rviz 
 In rviz, for object marker, add a marker and use topic "visualization_marker" (should be the standard).
 For a battery marker, add a marker and use topic "visualization_marker_battery"
+
+## Good to know
+
+No object is detected if there is nothing being published to the topic/s or if the x-distance is 1e5.
+The markers have the color of the detected object.
+
+color_index (in the code):
+0 = red
+1 = orange
+2 = yellow
+3 = light green
+4 = dark green
+5 = blue
+6 = purple
+7 = battery
+
+Check params file for: 
+Changing HSV intervals.
+Check for all colors or just one.
+Show window with thresholded image.
+Calibration constants for position estimation.
+etc.
