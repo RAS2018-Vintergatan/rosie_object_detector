@@ -20,10 +20,10 @@ For a battery marker, add a marker and use topic "visualization_marker_battery"
 
 ## Good to know
 
-No object is detected if there is nothing being published to the topic/s or if the x-distance is 1e5.
+No object is detected if there is nothing being published to the topic/s.
 The markers have the color of the detected object.
 
-color_index (in the code):
+color_index (in the code) and id (in the marker msg):
 0 = red
 1 = orange
 2 = yellow
