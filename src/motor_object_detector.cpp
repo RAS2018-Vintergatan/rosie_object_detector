@@ -26,6 +26,7 @@ class ImageConverter
   cv::Point p;
   float x_position_object;
   float y_position_object;
+  float max_dist;
   int depthindex;
   bool show_object_detection_threshold_image;
   bool show_battery_detection_threshold_image;
@@ -62,16 +63,13 @@ class ImageConverter
   bool check_all_colors;
   int color_index_detected;
   double sleep_duration;
+  double lifetime_rviz;
 
 public:
   ImageConverter()
     : it_(nh_)
   {
-    // Subscrive to input video feed and publish output video feed
     image_sub_ = it_.subscribe("/camera/rgb/image_rect_color", 1, &ImageConverter::imageCb, this);
-    //image_depth = it_.subscribe("/camera/depth/image_rect", 1, &ImageConverter::DepthImage, this);
-    //image_sub_depth = nh_.subscribe("/camera/depth/points", 1,  &ImageConverter::imageCb_depth, this);
-    image_pub_ = it_.advertise("/image_converter/output_video", 1);
     p.x = 0;
     p.y = 0;
     erosion_elem = 0;
@@ -164,13 +162,15 @@ public:
   }
 
   void publish_test(bool object_visible)
-  {
+  { 
+    nh_.getParam("/lifetime_rviz", lifetime_rviz);
     marker.header.frame_id = "camera_depth_frame";
     marker.header.stamp = ros::Time();
     marker.ns = "my_namespace";
-    marker.id = 0;
+    marker.id = color_index;
     marker.type = visualization_msgs::Marker::SPHERE;
     marker.action = visualization_msgs::Marker::ADD;
+    marker.lifetime = ros::Duration(lifetime_rviz);
     if (object_visible){
         marker.pose.position.x = x_position_object;
     }
@@ -219,14 +219,16 @@ public:
         marker.color.g = 0.0;
         marker.color.b = 0.0;
     }
-
     //only if using a MESH_RESOURCE marker type:
     marker.mesh_resource = "package://pr2_description/meshes/base_v0/base.dae";
-    if (color_index == 7){
-        vis_pub_bat.publish( marker );
-    }
-    else {
-        vis_pub.publish( marker );
+
+    if (x_position_object < max_dist){
+        if (color_index == 7){
+            vis_pub_bat.publish( marker );
+        }
+        else {
+            vis_pub.publish( marker );
+        }
     }
       
     static tf::TransformBroadcaster br;
@@ -261,9 +263,12 @@ public:
                   object_detected_prompt = false;
                   object_dissapeared_prompt = false;
               }
-              if (!object_detected_prompt){
+              if (!object_detected_prompt && x_position_object < max_dist){
                   object_detected_prompt = true;
                   ROS_INFO("Object with color %d detected!", color_index);
+                  // Check classification here
+                  // Write to the topic as specified in MS3 here
+                  // Use speaker to say what robot sees here
               }
           }
           else {
@@ -285,7 +290,7 @@ public:
                   object_dissapeared_prompt = true;
                   ROS_INFO("Object dissapeared!");
               }
-              publish_test(false);
+              //publish_test(false);
           }
       }
       else {
@@ -295,9 +300,12 @@ public:
                   battery_detected_prompt = false;
                   battery_dissapeared_prompt = false;
               }
-              if (!battery_detected_prompt){
+              if (!battery_detected_prompt && x_position_object < max_dist){
                   battery_detected_prompt = true;
                   ROS_INFO("Battery detected!");
+                  // Check classification here
+                  // Write to the topic as specified in MS3 here
+                  // Use speaker to say what robot sees here
               }
           }
           else {
@@ -319,7 +327,7 @@ public:
                   battery_dissapeared_prompt = true;
                   ROS_INFO("Battery dissapeared!");
               }
-              publish_test(false);
+              //publish_test(false);
           }
       }
 
@@ -340,6 +348,7 @@ public:
 
   void imageCb(const sensor_msgs::ImageConstPtr& msg)
   {
+    nh_.getParam("/max_dist", max_dist);
     nh_.getParam("/sat_low", sat_low);
     nh_.getParam("/sat_high", sat_high);
     nh_.getParam("/hue", hue);
@@ -372,7 +381,6 @@ public:
     nh_.getParam("/yellow_value_low", yellow_value_low);
     nh_.getParam("/color_index", color_index);
     nh_.getParam("/check_all_colors", check_all_colors);
-
     nh_.getParam("/hsv_battery_hue", hsv_battery_hue);
     nh_.getParam("/hsv_battery_hue_interval", hsv_battery_hue_interval);
     nh_.getParam("/hsv_battery_sat_low", hsv_battery_sat_low);
@@ -380,7 +388,6 @@ public:
     nh_.getParam("/hsv_battery_value_low", hsv_battery_value_low);
     nh_.getParam("/hsv_battery_value_high", hsv_battery_value_high);
     nh_.getParam("/sleep_duration_object_detector", sleep_duration);
-
 
     cv_bridge::CvImagePtr cv_ptr;
     try
