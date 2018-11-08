@@ -28,6 +28,7 @@ class ImageConverter
   float y_position_object;
   int depthindex;
   bool show_object_detection_threshold_image;
+  bool show_battery_detection_threshold_image;
   bool print_center_pixel_hue;
   bool object_detected_prompt, object_detected, object_dissapeared_prompt;
   bool battery_detected_prompt, battery_detected, battery_dissapeared_prompt;
@@ -115,38 +116,11 @@ public:
     dilate( erosion_dst, dilation_dst, element );
   }
 
-//  void pixel_color(){
-//      Vec3b intensity = HSVImage.at<Vec3b>(p.y,p.x);
-//      uchar hue = intensity.val[0];
-
-//      if (hue < hsv_red + color_interval && hue > hsv_red - color_interval) {
-//          color = 1;
-//      }
-//      else if (hue < hsv_orange + color_interval && hue > hsv_orange - color_interval) {
-//          color = 2;
-//      }
-//      else if (hue < hsv_yellow + color_interval && hue > hsv_yellow - color_interval) {
-//          color = 3;
-//      }
-//      else if (hue < hsv_green + color_interval && hue > hsv_green - color_interval) {
-//          color = 4;
-//      }
-//      else if (hue < hsv_blue + color_interval && hue > hsv_blue - color_interval) {
-//          color = 5;
-//      }
-//      else if (hue < hsv_purple + color_interval && hue > hsv_purple - color_interval) {
-//          color = 6;
-//      }
-//      else {
-//          color = 0;
-//          ROS_WARN("No color detected. Might have to adjust sat and value and/or hsv color values and color interval in object_detector_params.yaml");
-//      }
-//      if (print_color){
-//      ROS_INFO("Color: %d", color);
-//      }
-//  }
-
   void color_selector(){
+      nh_.getParam("/sat_low", sat_low);
+      nh_.getParam("/sat_high", sat_high);
+      nh_.getParam("/value_low", value_low);
+      nh_.getParam("/value_high", value_high);
       if (color_index == 0) {
           hue = hsv_red;
           hue_interval = hsv_red_interval;
@@ -273,10 +247,12 @@ public:
       p.x = m.m10/m.m00;
       p.y = m.m01/m.m00;
 
-      x_position_object = (x_factor/p.y - 10)/double(100);
-      y_position_object = sin(-1*(p.x - 320)/double(600))*x_position_object;
+      if (p.y > 0){
+          x_position_object = (x_factor/p.y - 10)/double(100);
+          y_position_object = sin(-1*(p.x - 320)/double(600))*x_position_object;
+      }
 
-      // Normal object
+  // Normal object
       if (color_index != 7)
       {
           if (p.x > -1 && p.y > -1) {
@@ -287,7 +263,7 @@ public:
               }
               if (!object_detected_prompt){
                   object_detected_prompt = true;
-                  ROS_INFO("Object detected!");
+                  ROS_INFO("Object with color %d detected!", color_index);
               }
           }
           else {
@@ -348,7 +324,11 @@ public:
       }
 
       circle(dilation_dst, p, 5, cv::Scalar(128,0,0), -1);
-      if (show_object_detection_threshold_image){
+      if (show_object_detection_threshold_image && color_index != 7){
+          //cv::imshow("Image with center",ThreshImage);
+          cv::imshow("Image with center",dilation_dst);
+      }
+      else if (show_battery_detection_threshold_image && color_index == 7){
           //cv::imshow("Image with center",ThreshImage);
           cv::imshow("Image with center",dilation_dst);
       }
@@ -367,6 +347,7 @@ public:
     nh_.getParam("/value_low", value_low);
     nh_.getParam("/value_high", value_high);
     nh_.getParam("/show_object_detection_threshold_image", show_object_detection_threshold_image);
+    nh_.getParam("/show_battery_detection_threshold_image", show_battery_detection_threshold_image);
     nh_.getParam("/print_center_pixel_hue", print_center_pixel_hue);
     nh_.getParam("/print_color", print_color);
     nh_.getParam("/x_factor", x_factor);
@@ -419,7 +400,7 @@ public:
     }
     else if (check_all_colors){
         color_index = 0;
-        while (color_index < 6 && !object_detected){
+        while (color_index <= 6 && !object_detected){
             color_checker();
             if (object_detected){
                 color_index_detected = color_index;
