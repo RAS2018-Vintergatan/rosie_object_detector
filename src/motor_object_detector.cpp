@@ -6,7 +6,12 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <visualization_msgs/Marker.h>
 #include <tf/transform_broadcaster.h>
-
+#include <rosie_object_detector/ObjectClassify.h>
+#include <rosie_object_detector/RAS_Evidence.h>
+#include <std_msgs/Int32.h>
+#include <geometry_msgs/TransformStamped.h>
+#include <string>
+#include <iostream>
 
 using namespace cv;
 
@@ -22,6 +27,9 @@ class ImageConverter
   image_transport::Publisher image_pub_;
   ros::Publisher vis_pub = nh_.advertise<visualization_msgs::Marker>( "visualization_marker", 0 );
   ros::Publisher vis_pub_bat = nh_.advertise<visualization_msgs::Marker>( "visualization_marker_battery", 0 );
+  ros::Publisher evidence_pub = nh_.advertise<rosie_object_detector::RAS_Evidence>("/evidence", 0);
+  ros::ServiceClient client = nh_.serviceClient<rosie_object_detector::ObjectClassify>("do_something_with_image");
+  rosie_object_detector::ObjectClassify srv;
   visualization_msgs::Marker marker;
   cv::Point p;
   float x_position_object;
@@ -58,12 +66,14 @@ class ImageConverter
   int color_index;
   Mat erosion_dst;
   Mat dilation_dst;
+  cv::Mat OriginalImage;
   cv::Mat ThreshImage;
   cv::Mat HSVImage;
   bool check_all_colors;
   int color_index_detected;
   double sleep_duration;
   double lifetime_rviz;
+  sensor_msgs::Image msg1;
 
 public:
   ImageConverter()
@@ -113,6 +123,16 @@ public:
     /// Apply the dilation operation
     dilate( erosion_dst, dilation_dst, element );
   }
+
+   template<typename T> 
+   std::string toString( const T& ao_Obj )
+    {
+      std::stringstream lo_stream;
+
+      lo_stream << ao_Obj;
+
+      return lo_stream.str();
+    }
 
   void color_selector(){
       nh_.getParam("/sat_low", sat_low);
@@ -265,10 +285,40 @@ public:
               }
               if (!object_detected_prompt && x_position_object < max_dist){
                   object_detected_prompt = true;
+		  static int colored_object_count = 0;
                   ROS_INFO("Object with color %d detected!", color_index);
                   // Check classification here
                   // Write to the topic as specified in MS3 here
                   // Use speaker to say what robot sees here
+
+		  //cv::imwrite("/home/ras/catkin_ws/src/rosie_object_detector/CameraCapture/camera_capture_%d.jpg",colored_object_count++, OriginalImage);
+		  colored_object_count = colored_object_count + 2;
+		  //cv::imwrite(std::string("/home/ras/catkin_ws/src/rosie_object_detector/CameraCapture/camera_capture_") + toString(colored_object_count) + std::string(".jpg"), OriginalImage);
+		  cv::imwrite(std::string("/home/ras15/catkin_ws/src/rosie/rosie_object_detector/CameraCapture/camera_capture_") + toString(colored_object_count) + std::string(".jpg"), OriginalImage);
+		  std_msgs::Int32 number;
+		  //number.data = 1;
+                  rosie_object_detector::ObjectClassify srv;
+                  srv.request.img_number.data = colored_object_count;
+		  srv.request.color_ind.data = color_index;
+                  if (client.call(srv))
+  			{
+    				ROS_INFO("Successful");
+				ROS_INFO("Publishing evidence");
+				rosie_object_detector::RAS_Evidence evid;
+				evid.stamp = ros::Time::now();
+				evid.group_number = 5;
+				evid.image_evidence = msg1;
+				evid.object_id = srv.response.decision.data;
+				geometry_msgs::TransformStamped position_to_send;
+				position_to_send.transform.translation.x = p.x;
+				position_to_send.transform.translation.y = p.y;
+				evid.object_location = position_to_send;
+				evidence_pub.publish(evid);
+  			}
+  		  else
+  			{
+    				ROS_ERROR("Failed to call service do_something_with_image");
+  			}
               }
           }
           else {
@@ -303,6 +353,29 @@ public:
               if (!battery_detected_prompt && x_position_object < max_dist){
                   battery_detected_prompt = true;
                   ROS_INFO("Battery detected!");
+		  /*static int battery_object_count = 1;
+                  battery_object_count = battery_object_count + 2;
+		  cv::imwrite(std::string("/home/ras/catkin_ws/src/rosie_object_detector/CameraCapture/camera_capture_") + toString(battery_object_count) + std::string(".jpg"), OriginalImage);
+		  std_msgs::Int32 number;
+		  //number.data = 450;
+                  rosie_object_detector::ObjectClassify srv;
+                  srv.request.img_number.data = battery_object_count;
+		  srv.request.color_ind.data = color_index;
+                  if (client.call(srv))
+  			{
+    				ROS_INFO("Successful");
+				ROS_INFO("Highest confidence is %f", srv.response.perc1.data);
+		  		cv::imshow("Image to be classified", OriginalImage);
+				std_msgs::String dec = srv.response.decision;
+				ROS_INFO("The result of classification is %s", toString(srv.response.decision.data));
+		  		cv::putText(OriginalImage, srv.response.decision.data, cvPoint(30,30), FONT_HERSHEY_COMPLEX_SMALL, 0.8, cvScalar(200,200,250), 1, CV_AA);
+  			}
+  		  else
+  			{
+    				ROS_ERROR("Failed to call service do_something_with_image");
+  			}
+
+		  */
                   // Check classification here
                   // Write to the topic as specified in MS3 here
                   // Use speaker to say what robot sees here
@@ -389,7 +462,10 @@ public:
     nh_.getParam("/hsv_battery_value_high", hsv_battery_value_high);
     nh_.getParam("/sleep_duration_object_detector", sleep_duration);
 
+    msg1 = *msg;
+
     cv_bridge::CvImagePtr cv_ptr;
+  
     try
     {
       cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
@@ -400,6 +476,7 @@ public:
       return;
     }
     cvtColor(cv_ptr->image,HSVImage,CV_BGR2HSV);
+    OriginalImage = cv_ptr->image;
 
     if (object_detected && check_all_colors) {
         color_index = color_index_detected;

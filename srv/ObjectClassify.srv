@@ -1,0 +1,15 @@
+std_msgs/Int32 img_number
+std_msgs/Int32 color_ind
+---
+std_msgs/Float32 perc1
+std_msgs/Float32 perc2
+std_msgs/Float32 perc3
+std_msgs/Int32 first_color
+std_msgs/Int32 second_color
+std_msgs/Int32 third_color
+std_msgs/String first_shape
+std_msgs/String second_shape
+std_msgs/String third_shape
+std_msgs/String decision
+
+
