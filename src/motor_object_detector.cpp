@@ -299,6 +299,7 @@ public:
                   object_detected_prompt = true;
 		  static int colored_object_count = 0;
                   ROS_INFO("Object with color %d detected!", color_index);
+			
                   // Check classification here
                   // Write to the topic as specified in MS3 here
                   // Use speaker to say what robot sees here
@@ -325,7 +326,7 @@ public:
                                 position_to_send.transform.translation.x = robot_x_pos + x_position_object*cos(robot_angle) - y_position_object*sin(robot_angle); // Not tested if correct
                                 position_to_send.transform.translation.y = robot_y_pos + x_position_object*sin(robot_angle) + y_position_object*cos(robot_angle); // Not tested if correct
 				evid.object_location = position_to_send;
-				evidence_pub.publish(evid);
+				evidence_pub.publish(evid); 
   			}
   		  else
   			{
@@ -367,7 +368,7 @@ public:
                   ROS_INFO("Battery detected!");
 		  		  static int battery_object_count = 1;
                   battery_object_count = battery_object_count + 2;
-		  cv::imwrite(std::string("/home/ras/catkin_ws/src/rosie_object_detector/CameraCapture/camera_capture_") + toString(battery_object_count) + std::string(".jpg"), OriginalImage);
+		  ROS_ASSERT(cv::imwrite(std::string("/home/ras15/catkin_ws/src/rosie/rosie_object_detector/CameraCapture/camera_capture_") + toString(battery_object_count) + std::string(".jpg"), OriginalImage));
 		  std_msgs::Int32 number;
 		  //number.data = 450;
                   rosie_object_detector::ObjectClassify srv;

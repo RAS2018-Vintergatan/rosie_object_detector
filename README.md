@@ -2,23 +2,33 @@
 
 ## How to run
 
-## Start the camera
+# Start the camera
 
 roslaunch realsense_camera sr300_nodelet_rgbd.launch
 
-## Load params
+# Start the classifier
+
+rosrun rosie_object_detector classify_image_server 
+
+# Load params
 
 object_detector_params.yaml
 
-## Start the detector
+# Start the detector
 
 rosrun rosie_object_detector rosie_object_detector
 
-## For rviz 
+# Remember to do a rosbag of /evidence
+
+rosbag record /evidence
+
+## Misc
+
+# For rviz 
 In rviz, for object marker, add a marker and use topic "visualization_marker" (should be the standard).
 For a battery marker, add a marker and use topic "visualization_marker_battery"
 
-## Good to know
+# Good to know
 
 No object is detected if there is nothing being published to the topic/s.
 The markers have the color of the detected object.

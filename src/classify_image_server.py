@@ -28,7 +28,7 @@ def load_graph():
   graph = tf.Graph()
   graph_def = tf.GraphDef()
   #model_file = Path("/home/ras/catkin_ws/src/rosie_object_detector/src/data/retrained_graph_final.pb")
-  model_file = Path("/home/ras15/catkin_ws/src/rosie/rosie_object_detector/src/data/retrained_graph_10_NR.pb")
+  model_file = Path("/home/ras15/catkin_ws/src/rosie/rosie_object_detector/src/data/retrained_graph_10B_NR.pb")
   with open(str(model_file), "rb") as f:
     graph_def.ParseFromString(f.read())
   with graph.as_default():
@@ -186,7 +186,7 @@ def overall_call(file_name):
 		colors_k.append(2)
 	if(i == 'battery'):
 		shapes_k.append("Battery")
-		colors_l.append(7)
+		colors_k.append(7)
 
 
 

@@ -1,3 +1,4 @@
+battery
 bluetriangle
 greencube
 greenhollowcube
