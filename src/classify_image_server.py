@@ -184,6 +184,18 @@ def overall_call(file_name):
 	if(i == 'yellowsphere'):
 		shapes_k.append("Sphere")
 		colors_k.append(2)
+	if(i == 'yellowcube'):
+		shapes_k.append("Cube")
+		colors_k.append(2)
+	if(i == 'bluecube'):
+		shapes_k.append("Cube")
+		colors_k.append(5)
+	if(i == 'purplestar'):
+		shapes_k.append("Star")
+		colors_k.append(6)
+	if(i == 'redhollowcylinder'):
+		shapes_k.append("HollowCylinder")
+		colors_k.append(0)
 	if(i == 'battery'):
 		shapes_k.append("Battery")
 		colors_k.append(7)
