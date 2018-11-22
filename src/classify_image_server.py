@@ -22,13 +22,13 @@ import numpy as np
 import tensorflow as tf
 
 def load_graph():
-  model_file="retrained_graph.pb"
+  model_file="retrained_graph_6_NR.pb"
   #file_path = path.relpath("retrained_graph.pb")
   #print(file_path)
   graph = tf.Graph()
   graph_def = tf.GraphDef()
   #model_file = Path("/home/ras/catkin_ws/src/rosie_object_detector/src/data/retrained_graph_final.pb")
-  model_file = Path("/home/ras15/catkin_ws/src/rosie/rosie_object_detector/src/data/retrained_graph_final.pb")
+  model_file = Path("/home/ras15/catkin_ws/src/rosie/rosie_object_detector/src/data/retrained_graph_10_NR.pb")
   with open(str(model_file), "rb") as f:
     graph_def.ParseFromString(f.read())
   with graph.as_default():
@@ -163,41 +163,133 @@ def overall_call(file_name):
 	if(i == 'greencube'):
 		shapes_k.append("Cube")
 		colors_k.append(4)
+	if(i == 'greenhollowcube'):
+		shapes_k.append("HollowCube")
+		colors_k.append(4)
+	if(i == 'redhollowcube'):
+		shapes_k.append("HollowCube")
+		colors_k.append(0)
+	if(i == 'redsphere'):
+		shapes_k.append("Sphere")
+		colors_k.append(0)
+	if(i == 'bluetriangle'):
+		shapes_k.append("Sphere")
+		colors_k.append(5)
+	if(i == 'greenhollowcylinder'):
+		shapes_k.append("Sphere")
+		colors_k.append(3)
+	if(i == 'orangeplus'):
+		shapes_k.append("Sphere")
+		colors_k.append(1)
+	if(i == 'yellowsphere'):
+		shapes_k.append("Sphere")
+		colors_k.append(2)
+	if(i == 'battery'):
+		shapes_k.append("Battery")
+		colors_l.append(7)
 
 
-  #if(results[top_k[0]] > 0.5)
-	#print("Yay we found an object")
-	#string_to_return = str(labels[top_k[0]])
-  #else:
-	#print("No object found")
-	#string_to_return = "No object found"
-  #return string_to_return
 
   return results,labels,top_k,shapes_k,colors_k, top_results
 
 def decideOnObject(index, colors, shapes, results, labels, top_indices):
-	if(index == colors[0]):
-		if(results[top_indices[0]] > 0.5):
-			print("Perfect Match")
-			#return shapes[0]
-			return labels[top_indices[0]]
-		else:
-			print("Match")
-			#return shapes[0]
-			return labels[top_indices[0]]
-	elif(index == colors[1]):
-		print("Bad")
-		#return shapes[1]
-		return labels[top_indices[1]]
-	elif(index == colors[2]):
-		print("Verry bad")
-		#return shapes[2]
-		return labels[top_indices[2]]
-	else:
-		print("No match possible")
-		#return "Boo"
-		return "No object found"
-		#return labels[top_indices[0]]
+	if(index == 0 or index == 1 or index == 2):
+		if(colors[0] == index):
+			if(results[top_indices[0]] > 0.5):
+				print "Perfect Match"
+				return labels[top_indices[0]]
+			else:
+				print "Good Match"
+				return labels[top_indices[0]]
+	elif(index == 3 or index == 4):
+		if(colors[0] == index):
+			if(results[top_indices[0]] > 0.5):
+				print "Perfect Match"
+				return labels[top_indices[0]]
+			else:
+				print "Good Match"
+				return labels[top_indices[0]]
+	elif(index == 5 or index == 6):
+		if(colors[0] == index):
+			if(results[top_indices[0]] > 0.5):
+				print "Perfect Match"
+				return labels[top_indices[0]]
+			else:
+				print "Good Match"
+				return labels[top_indices[0]]
+	elif(index == 7):
+		if(colors[0] == index):
+			if(results[top_indices[0]] > 0.5):
+				print "Perfect Match"
+				return labels[top_indices[0]]
+			else:
+				print "Good Match"
+				return labels[top_indices[0]]
+
+	if(index == 0 or index == 1 or index == 2):
+		if(colors[1] == index):
+			if(results[top_indices[1]] > 0.5):
+				print "Good Match"
+				return labels[top_indices[1]]
+			else:
+				print "Bad Match"
+				return labels[top_indices[1]]
+	elif(index == 3 or index == 4):
+		if(colors[1] == index):
+			if(results[top_indices[1]] > 0.5):
+				print "Good Match"
+				return labels[top_indices[1]]
+			else:
+				print "Bad Match"
+				return labels[top_indices[1]]
+	elif(index == 5 or index == 6):
+		if(colors[1] == index):
+			if(results[top_indices[1]] > 0.5):
+				print "Good Match"
+				return labels[top_indices[1]]
+			else:
+				print "Bad Match"
+				return labels[top_indices[1]]
+	elif(index == 7):
+		if(colors[1] == index):
+			if(results[top_indices[1]] > 0.5):
+				print "Good Match"
+				return labels[top_indices[1]]
+			else:
+				print "Bad Match"
+				return labels[top_indices[1]]
+	if(index == 0 or index == 1 or index == 2):
+		if(colors[2] == index):
+			if(results[top_indices[2]] > 0.5):
+				print "Bad Match"
+				return labels[top_indices[2]]
+			else:
+				print "Very Bad Match"
+				return labels[top_indices[2]]
+	elif(index == 3 or index == 4):
+		if(colors[2] == index):
+			if(results[top_indices[2]] > 0.5):
+				print "Bad Match"
+				return labels[top_indices[2]]
+			else:
+				print "Very Bad Match"
+				return labels[top_indices[2]]
+	elif(index == 5 or index == 6):
+		if(colors[2] == index):
+			if(results[top_indices[2]] > 0.5):
+				print "Bad Match"
+				return labels[top_indices[2]]
+			else:
+				print "Very Bad Match"
+				return labels[top_indices[2]]
+	elif(index == 7):
+		if(colors[2] == index):
+			if(results[top_indices[2]] > 0.5):
+				print "Bad Match"
+				return labels[top_indices[2]]
+			else:
+				print "Very Bad Match"
+				return labels[top_indices[2]]
 		
 		
 
@@ -209,7 +301,7 @@ def handle_classify_image(req):
 	print req
 	resp = ObjectClassifyResponse()
 	#a, b, top_k, shapes_k, colors_k, top_results = overall_call("/home/ras/catkin_ws/src/rosie_object_detector/CameraCapture/camera_capture_%d.jpg"%req.img_number.data)
-        a, b, top_k, shapes_k, colors_k, top_results = overall_call("/home/ras15/catkin_ws/src/rosie/rosie_object_detector/CameraCapture/camera_capture_%d.jpg"%req.img_number.data)
+	a, b, top_k, shapes_k, colors_k, top_results = overall_call("/home/ras15/catkin_ws/src/rosie/rosie_object_detector/CameraCapture/camera_capture_%d.jpg"%req.img_number.data)
 	#OriginalImage = cv2.imread("/home/ras/catkin_ws/src/rosie_object_detector/CameraCapture/camera_capture_%d.jpg"%req.img_number.data)
 	#print OriginalImage.shape
 	#cv2.imshow("image_to_be_classified", OriginalImage)
@@ -227,7 +319,7 @@ def handle_classify_image(req):
 	resp.perc1.data = a[top_k[0]]
 	resp.perc2.data = a[top_k[1]]
 	resp.perc3.data = a[top_k[2]]
-	resp.first_shape.data = str(shapes_k[0])
+	resp.first_shape.data = shapes_k[0]
 	resp.second_shape.data = shapes_k[1]
 	resp.third_shape.data = shapes_k[2]
 	resp.first_color.data = colors_k[0]

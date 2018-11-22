@@ -12,18 +12,26 @@
 #include <geometry_msgs/TransformStamped.h>
 #include <string>
 #include <iostream>
+#include <nav_msgs/Odometry.h>
 
 using namespace cv;
 
 static const std::string OPENCV_WINDOW = "Image window";
+float robot_x_pos, robot_y_pos, robot_angle;
+
+  void odomCallback(const nav_msgs::Odometry msg){
+	robot_x_pos = msg.pose.pose.position.x;
+	robot_y_pos = msg.pose.pose.position.y;
+	robot_angle = msg.pose.pose.orientation.z;
+  }
 
 class ImageConverter
 {
   ros::NodeHandle nh_;
+  ros::Subscriber odom_sub = nh_.subscribe("/odom",100,odomCallback);
   image_transport::ImageTransport it_;
   image_transport::Subscriber image_sub_;
   image_transport::Subscriber image_depth;
-  ros::Subscriber image_sub_depth;
   image_transport::Publisher image_pub_;
   ros::Publisher vis_pub = nh_.advertise<visualization_msgs::Marker>( "visualization_marker", 0 );
   ros::Publisher vis_pub_bat = nh_.advertise<visualization_msgs::Marker>( "visualization_marker_battery", 0 );
@@ -74,14 +82,18 @@ class ImageConverter
   double sleep_duration;
   double lifetime_rviz;
   sensor_msgs::Image msg1;
+  std::string classifier_decision;
 
 public:
   ImageConverter()
     : it_(nh_)
   {
     image_sub_ = it_.subscribe("/camera/rgb/image_rect_color", 1, &ImageConverter::imageCb, this);
-    p.x = 0;
+	p.x = 0;
     p.y = 0;
+	robot_x_pos = 0.0;
+	robot_y_pos = 0.0;
+	robot_angle = 0.0;
     erosion_elem = 0;
     dilation_elem = 0;
     object_detected_prompt = false;
@@ -301,7 +313,7 @@ public:
                   srv.request.img_number.data = colored_object_count;
 		  srv.request.color_ind.data = color_index;
                   if (client.call(srv))
-  			{
+  			{                                
     				ROS_INFO("Successful");
 				ROS_INFO("Publishing evidence");
 				rosie_object_detector::RAS_Evidence evid;
@@ -310,8 +322,8 @@ public:
 				evid.image_evidence = msg1;
 				evid.object_id = srv.response.decision.data;
 				geometry_msgs::TransformStamped position_to_send;
-				position_to_send.transform.translation.x = p.x;
-				position_to_send.transform.translation.y = p.y;
+                                position_to_send.transform.translation.x = robot_x_pos + x_position_object*cos(robot_angle) - y_position_object*sin(robot_angle); // Not tested if correct
+                                position_to_send.transform.translation.y = robot_y_pos + x_position_object*sin(robot_angle) + y_position_object*cos(robot_angle); // Not tested if correct
 				evid.object_location = position_to_send;
 				evidence_pub.publish(evid);
   			}
@@ -353,7 +365,7 @@ public:
               if (!battery_detected_prompt && x_position_object < max_dist){
                   battery_detected_prompt = true;
                   ROS_INFO("Battery detected!");
-		  /*static int battery_object_count = 1;
+		  		  static int battery_object_count = 1;
                   battery_object_count = battery_object_count + 2;
 		  cv::imwrite(std::string("/home/ras/catkin_ws/src/rosie_object_detector/CameraCapture/camera_capture_") + toString(battery_object_count) + std::string(".jpg"), OriginalImage);
 		  std_msgs::Int32 number;
@@ -364,18 +376,22 @@ public:
                   if (client.call(srv))
   			{
     				ROS_INFO("Successful");
-				ROS_INFO("Highest confidence is %f", srv.response.perc1.data);
-		  		cv::imshow("Image to be classified", OriginalImage);
-				std_msgs::String dec = srv.response.decision;
-				ROS_INFO("The result of classification is %s", toString(srv.response.decision.data));
-		  		cv::putText(OriginalImage, srv.response.decision.data, cvPoint(30,30), FONT_HERSHEY_COMPLEX_SMALL, 0.8, cvScalar(200,200,250), 1, CV_AA);
+					ROS_INFO("Publishing evidence");
+				rosie_object_detector::RAS_Evidence evid;
+				evid.stamp = ros::Time::now();
+				evid.group_number = 5;
+				evid.image_evidence = msg1;
+				evid.object_id = srv.response.decision.data;
+				geometry_msgs::TransformStamped position_to_send;
+                position_to_send.transform.translation.x = robot_x_pos + x_position_object*cos(robot_angle) - y_position_object*sin(robot_angle); // Not tested if correct
+                position_to_send.transform.translation.y = robot_y_pos + x_position_object*sin(robot_angle) + y_position_object*cos(robot_angle); // Not tested if correct
+				evid.object_location = position_to_send;
+				evidence_pub.publish(evid);
   			}
   		  else
   			{
     				ROS_ERROR("Failed to call service do_something_with_image");
   			}
-
-		  */
                   // Check classification here
                   // Write to the topic as specified in MS3 here
                   // Use speaker to say what robot sees here

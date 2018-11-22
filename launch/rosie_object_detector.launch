@@ -3,6 +3,10 @@
 	<!-- launch camera -->
 	<include file="$(find realsense_camera)/launch/sr300_nodelet_rgbd.launch"/>
 
+	<!-- run the object classifier -->
+	<node pkg="rosie_object_detector" type="classify_image_server.py" name="do_something_with_image_server"/>
+
+	<!-- load parameters -->
 	<rosparam command="load" file="$(find rosie_object_detector)/object_detector_params.yaml"/>
 		
 	<!-- run the object detector -->

@@ -1,3 +1,10 @@
+bluetriangle
 greencube
+greenhollowcube
+greenhollowcylinder
+orangeplus
 orangestar
 purpleplus
+redhollowcube
+redsphere
+yellowsphere
