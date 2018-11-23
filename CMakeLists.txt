@@ -33,4 +33,4 @@ link_directories(
 
 add_executable(rosie_object_detector src/motor_object_detector.cpp)
 target_link_libraries(rosie_object_detector ${OpenCV_LIBS} ${catkin_LIBRARIES}  ${Boost_LIBRARIES}  ${PCL_LIBRARIES})
-add_dependencies(rosie_object_detector gen_cpp sensor_msgs nav_msgs cv_bridge std_msgs geometry_msgs image_transport pcl_conversions tf)
+add_dependencies(rosie_object_detector ${catkin_EXPORTED_TARGETS})
