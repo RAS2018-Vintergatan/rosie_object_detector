@@ -1,4 +1,4 @@
-show_object_detection_threshold_image: true
+show_object_detection_threshold_image: false
 show_battery_detection_threshold_image: false
 print_center_pixel_hue: false
 print_color: true

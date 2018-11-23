@@ -28,7 +28,7 @@ def load_graph():
   graph = tf.Graph()
   graph_def = tf.GraphDef()
   #model_file = Path("/home/ras/catkin_ws/src/rosie_object_detector/src/data/retrained_graph_final.pb")
-  model_file = Path("/home/ras15/catkin_ws/src/rosie/rosie_object_detector/src/data/retrained_graph_10B_NR.pb")
+  model_file = Path("/home/ras15/catkin_ws/src/rosie/rosie_object_detector/src/data/retrained_graph_14B_NR_incomplete.pb")
   with open(str(model_file), "rb") as f:
     graph_def.ParseFromString(f.read())
   with graph.as_default():
@@ -66,7 +66,7 @@ def load_labels():
   #file_path = path.relpath("retrained_graph.pb")
   label = []
   #model_file = Path("/home/ras/catkin_ws/src/rosie_object_detector/src/data/retrained_labels.txt")
-  model_file = Path("/home/ras15/catkin_ws/src/rosie/rosie_object_detector/src/data/retrained_labels.txt")
+  model_file = Path("/home/ras25/catkin_ws/src/rosie/rosie_object_detector/src/data/retrained_labels.txt")
   proto_as_ascii_lines = tf.gfile.GFile(str(model_file)).readlines()
   for l in proto_as_ascii_lines:
     label.append(l.rstrip())
@@ -313,7 +313,7 @@ def handle_classify_image(req):
 	print req
 	resp = ObjectClassifyResponse()
 	#a, b, top_k, shapes_k, colors_k, top_results = overall_call("/home/ras/catkin_ws/src/rosie_object_detector/CameraCapture/camera_capture_%d.jpg"%req.img_number.data)
-	a, b, top_k, shapes_k, colors_k, top_results = overall_call("/home/ras15/catkin_ws/src/rosie/rosie_object_detector/CameraCapture/camera_capture_%d.jpg"%req.img_number.data)
+	a, b, top_k, shapes_k, colors_k, top_results = overall_call("/home/ras25/catkin_ws/src/rosie/rosie_object_detector/CameraCapture/camera_capture_%d.jpg"%req.img_number.data)
 	#OriginalImage = cv2.imread("/home/ras/catkin_ws/src/rosie_object_detector/CameraCapture/camera_capture_%d.jpg"%req.img_number.data)
 	#print OriginalImage.shape
 	#cv2.imshow("image_to_be_classified", OriginalImage)
@@ -342,7 +342,7 @@ def handle_classify_image(req):
 	resp.decision = x
 	print resp
 	#os.remove("/home/ras/catkin_ws/src/rosie_object_detector/CameraCapture/camera_capture_%d.jpg"%req.img_number.data)
-	os.remove("/home/ras15/catkin_ws/src/rosie/rosie_object_detector/CameraCapture/camera_capture_%d.jpg"%req.img_number.data)
+	os.remove("/home/ras25/catkin_ws/src/rosie/rosie_object_detector/CameraCapture/camera_capture_%d.jpg"%req.img_number.data)
 	return resp
 
 def classify_image_server():

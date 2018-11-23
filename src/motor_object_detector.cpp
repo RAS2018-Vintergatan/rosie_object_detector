@@ -307,7 +307,7 @@ public:
 		  //cv::imwrite("/home/ras/catkin_ws/src/rosie_object_detector/CameraCapture/camera_capture_%d.jpg",colored_object_count++, OriginalImage);
 		  colored_object_count = colored_object_count + 2;
 		  //cv::imwrite(std::string("/home/ras/catkin_ws/src/rosie_object_detector/CameraCapture/camera_capture_") + toString(colored_object_count) + std::string(".jpg"), OriginalImage);
-		  cv::imwrite(std::string("/home/ras15/catkin_ws/src/rosie/rosie_object_detector/CameraCapture/camera_capture_") + toString(colored_object_count) + std::string(".jpg"), OriginalImage);
+		  cv::imwrite(std::string("/home/ras25/catkin_ws/src/rosie/rosie_object_detector/CameraCapture/camera_capture_") + toString(colored_object_count) + std::string(".jpg"), OriginalImage);
 		  std_msgs::Int32 number;
 		  //number.data = 1;
                   rosie_object_detector::ObjectClassify srv;
@@ -368,7 +368,7 @@ public:
                   ROS_INFO("Battery detected!");
 		  		  static int battery_object_count = 1;
                   battery_object_count = battery_object_count + 2;
-		  ROS_ASSERT(cv::imwrite(std::string("/home/ras15/catkin_ws/src/rosie/rosie_object_detector/CameraCapture/camera_capture_") + toString(battery_object_count) + std::string(".jpg"), OriginalImage));
+		  ROS_ASSERT(cv::imwrite(std::string("/home/ras25/catkin_ws/src/rosie/rosie_object_detector/CameraCapture/camera_capture_") + toString(battery_object_count) + std::string(".jpg"), OriginalImage));
 		  std_msgs::Int32 number;
 		  //number.data = 450;
                   rosie_object_detector::ObjectClassify srv;
