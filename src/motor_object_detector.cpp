@@ -9,7 +9,7 @@
 #include <rosie_object_detector/ObjectClassify.h>
 #include <rosie_object_detector/RAS_Evidence.h>
 #include <std_msgs/Int32.h>
-#include <geometry_msgs/TransformStamped.h>
+#include <geometry_msgs/Vector3.h>
 #include <string>
 #include <iostream>
 #include <nav_msgs/Odometry.h>
@@ -322,9 +322,10 @@ public:
 				evid.group_number = 5;
 				evid.image_evidence = msg1;
 				evid.object_id = srv.response.decision.data;
-				geometry_msgs::TransformStamped position_to_send;
-                                position_to_send.transform.translation.x = robot_x_pos + x_position_object*cos(robot_angle) - y_position_object*sin(robot_angle); // Not tested if correct
-                                position_to_send.transform.translation.y = robot_y_pos + x_position_object*sin(robot_angle) + y_position_object*cos(robot_angle); // Not tested if correct
+				evid.object_id_int.data = srv.response.decision_int.data;
+				geometry_msgs::Vector3 position_to_send;
+                                position_to_send.x = robot_x_pos + x_position_object*cos(robot_angle) - y_position_object*sin(robot_angle); // Not tested if correct
+                                position_to_send.y = robot_y_pos + x_position_object*sin(robot_angle) + y_position_object*cos(robot_angle); // Not tested if correct
 				evid.object_location = position_to_send;
 				evidence_pub.publish(evid); 
   			}
@@ -383,9 +384,10 @@ public:
 				evid.group_number = 5;
 				evid.image_evidence = msg1;
 				evid.object_id = srv.response.decision.data;
-				geometry_msgs::TransformStamped position_to_send;
-                position_to_send.transform.translation.x = robot_x_pos + x_position_object*cos(robot_angle) - y_position_object*sin(robot_angle); // Not tested if correct
-                position_to_send.transform.translation.y = robot_y_pos + x_position_object*sin(robot_angle) + y_position_object*cos(robot_angle); // Not tested if correct
+				evid.object_id_int.data = srv.response.decision_int.data;
+				geometry_msgs::Vector3 position_to_send;
+                position_to_send.x = robot_x_pos + x_position_object*cos(robot_angle) - y_position_object*sin(robot_angle); // Not tested if correct
+                position_to_send.y = robot_y_pos + x_position_object*sin(robot_angle) + y_position_object*cos(robot_angle); // Not tested if correct
 				evid.object_location = position_to_send;
 				evidence_pub.publish(evid);
   			}

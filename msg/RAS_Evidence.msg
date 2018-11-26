@@ -9,6 +9,7 @@ sensor_msgs/Image image_evidence
 
 #### String that indicates which object has been detected/recognized ####
 string object_id
+std_msgs/Int8 object_id_int
 
 # object_id should be one of the following (use these constants)
 # an_object: object was detected but not identified
@@ -30,6 +31,6 @@ string patric=Patric
 #### Location of the object in the /map frame ####
 # MAKE SURE THE LOCATION IS EXPRESSED IN THE /map FRAME!
 # we only care about X,Y position coordinate
-geometry_msgs/TransformStamped object_location
+geometry_msgs/Vector3 object_location
 
 # More info: https://anywiki.csc.kth.se/DD2425/doku.php?id=ras2017:object_evidence

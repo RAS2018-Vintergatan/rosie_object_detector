@@ -11,5 +11,6 @@ std_msgs/String first_shape
 std_msgs/String second_shape
 std_msgs/String third_shape
 std_msgs/String decision
+std_msgs/Int8 decision_int
 
 

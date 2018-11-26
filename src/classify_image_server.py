@@ -340,6 +340,8 @@ def handle_classify_image(req):
 	x = String()
 	x.data = str(shape_id)
 	resp.decision = x
+	resp.decision_int = shape_id
+
 	print resp
 	#os.remove("/home/ras/catkin_ws/src/rosie_object_detector/CameraCapture/camera_capture_%d.jpg"%req.img_number.data)
 	os.remove("/home/ras25/catkin_ws/src/rosie/rosie_object_detector/CameraCapture/camera_capture_%d.jpg"%req.img_number.data)
