@@ -1,5 +1,5 @@
 show_object_detection_threshold_image: false
-show_battery_detection_threshold_image: false
+show_battery_detection_threshold_image: true
 print_center_pixel_hue: false
 print_color: true
 sleep_duration_object_detector: 0.0
@@ -50,3 +50,6 @@ hsv_battery_sat_low: 70
 hsv_battery_sat_high: 105
 hsv_battery_value_low: 50
 hsv_battery_value_high: 140
+
+current_system: 'ras25'
+

@@ -8,7 +8,7 @@ roslaunch realsense_camera sr300_nodelet_rgbd.launch
 
 # Start the classifier
 
-rosrun rosie_object_detector classify_image_server 
+rosrun rosie_object_detector classify_image_server.py 
 
 # Load params
 

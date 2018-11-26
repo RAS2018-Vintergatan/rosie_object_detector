@@ -13,7 +13,7 @@
 #include <string>
 #include <iostream>
 #include <nav_msgs/Odometry.h>
-
+#include <boost/filesystem.hpp>
 using namespace cv;
 
 static const std::string OPENCV_WINDOW = "Image window";
@@ -72,6 +72,7 @@ class ImageConverter
   int dilation_size;
   int color;
   int color_index;
+  std::string current_system;
   Mat erosion_dst;
   Mat dilation_dst;
   cv::Mat OriginalImage;
@@ -307,7 +308,10 @@ public:
 		  //cv::imwrite("/home/ras/catkin_ws/src/rosie_object_detector/CameraCapture/camera_capture_%d.jpg",colored_object_count++, OriginalImage);
 		  colored_object_count = colored_object_count + 2;
 		  //cv::imwrite(std::string("/home/ras/catkin_ws/src/rosie_object_detector/CameraCapture/camera_capture_") + toString(colored_object_count) + std::string(".jpg"), OriginalImage);
-		  cv::imwrite(std::string("/home/ras25/catkin_ws/src/rosie/rosie_object_detector/CameraCapture/camera_capture_") + toString(colored_object_count) + std::string(".jpg"), OriginalImage);
+		  //ROS_ASSERT(cv::imwrite(std::string("CameraCapture/camera_capture_") + toString(colored_object_count) + std::string(".jpg"), OriginalImage));
+		  //ROS_INFO("Printing some path here %s", boost::filesystem::current_path());
+		  boost::filesystem::path dir("/CameraCapture");
+	      ROS_ASSERT(cv::imwrite(std::string("/home/") + current_system + std::string("/catkin_ws/src/rosie/rosie_object_detector/src/CameraCapture/camera_capture_") + toString(colored_object_count) + std::string(".jpg"), OriginalImage));
 		  std_msgs::Int32 number;
 		  //number.data = 1;
                   rosie_object_detector::ObjectClassify srv;
@@ -369,7 +373,8 @@ public:
                   ROS_INFO("Battery detected!");
 		  		  static int battery_object_count = 1;
                   battery_object_count = battery_object_count + 2;
-		  ROS_ASSERT(cv::imwrite(std::string("/home/ras25/catkin_ws/src/rosie/rosie_object_detector/CameraCapture/camera_capture_") + toString(battery_object_count) + std::string(".jpg"), OriginalImage));
+		  //ROS_ASSERT(cv::imwrite(std::string("CameraCapture/camera_capture_") + toString(battery_object_count) + std::string(".jpg"), OriginalImage));
+		  ROS_ASSERT(cv::imwrite(std::string("/home/") + current_system + std::string("/catkin_ws/src/rosie/rosie_object_detector/src/CameraCapture/camera_capture_") + toString(battery_object_count) + std::string(".jpg"), OriginalImage));
 		  std_msgs::Int32 number;
 		  //number.data = 450;
                   rosie_object_detector::ObjectClassify srv;
@@ -480,7 +485,7 @@ public:
     nh_.getParam("/hsv_battery_value_low", hsv_battery_value_low);
     nh_.getParam("/hsv_battery_value_high", hsv_battery_value_high);
     nh_.getParam("/sleep_duration_object_detector", sleep_duration);
-
+    nh_.getParam("/current_system", current_system);
     msg1 = *msg;
 
     cv_bridge::CvImagePtr cv_ptr;

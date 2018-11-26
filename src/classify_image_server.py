@@ -13,7 +13,7 @@ from std_msgs.msg import String
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 import os
-#from os import path
+from os import path
 from pathlib import Path
 import argparse
 import sys
@@ -22,14 +22,16 @@ import numpy as np
 import tensorflow as tf
 
 def load_graph():
-  model_file="retrained_graph_6_NR.pb"
+  #model_file="retrained_graph_6_NR.pb"
   #file_path = path.relpath("retrained_graph.pb")
   #print(file_path)
   graph = tf.Graph()
   graph_def = tf.GraphDef()
   #model_file = Path("/home/ras/catkin_ws/src/rosie_object_detector/src/data/retrained_graph_final.pb")
-  model_file = Path("/home/ras15/catkin_ws/src/rosie/rosie_object_detector/src/data/retrained_graph_14B_NR_incomplete.pb")
-  with open(str(model_file), "rb") as f:
+  #model_file = Path("/home/ras15/catkin_ws/src/rosie/rosie_object_detector/src/data/retrained_graph_14B_NR_incomplete.pb")
+  my_path = os.path.abspath(os.path.dirname(__file__))
+  path = os.path.join(my_path, 'data', 'retrained_graph_14B_NR_incomplete.pb')
+  with open(str(path), "rb") as f:
     graph_def.ParseFromString(f.read())
   with graph.as_default():
     tf.import_graph_def(graph_def)
@@ -66,7 +68,9 @@ def load_labels():
   #file_path = path.relpath("retrained_graph.pb")
   label = []
   #model_file = Path("/home/ras/catkin_ws/src/rosie_object_detector/src/data/retrained_labels.txt")
-  model_file = Path("/home/ras25/catkin_ws/src/rosie/rosie_object_detector/src/data/retrained_labels.txt")
+  #model_file = Path("/home/ras25/catkin_ws/src/rosie/rosie_object_detector/src/data/retrained_labels.txt")
+  my_path = os.path.abspath(os.path.dirname(__file__))
+  model_file = os.path.join(my_path, 'data', 'retrained_labels.txt')
   proto_as_ascii_lines = tf.gfile.GFile(str(model_file)).readlines()
   for l in proto_as_ascii_lines:
     label.append(l.rstrip())
@@ -313,7 +317,10 @@ def handle_classify_image(req):
 	print req
 	resp = ObjectClassifyResponse()
 	#a, b, top_k, shapes_k, colors_k, top_results = overall_call("/home/ras/catkin_ws/src/rosie_object_detector/CameraCapture/camera_capture_%d.jpg"%req.img_number.data)
-	a, b, top_k, shapes_k, colors_k, top_results = overall_call("/home/ras25/catkin_ws/src/rosie/rosie_object_detector/CameraCapture/camera_capture_%d.jpg"%req.img_number.data)
+	my_path = os.path.abspath(os.path.dirname(__file__))	
+	model_file = os.path.join(my_path, 'CameraCapture', 'camera_capture_%d.jpg'%req.img_number.data)
+	a, b, top_k, shapes_k, colors_k, top_results = overall_call(str(model_file))
+	#a, b, top_k, shapes_k, colors_k, top_results = overall_call("/home/ras15/catkin_ws/src/rosie/rosie_object_detector/CameraCapture/camera_capture_%d.jpg"%req.img_number.data)
 	#OriginalImage = cv2.imread("/home/ras/catkin_ws/src/rosie_object_detector/CameraCapture/camera_capture_%d.jpg"%req.img_number.data)
 	#print OriginalImage.shape
 	#cv2.imshow("image_to_be_classified", OriginalImage)
@@ -340,11 +347,12 @@ def handle_classify_image(req):
 	x = String()
 	x.data = str(shape_id)
 	resp.decision = x
-	resp.decision_int = shape_id
+	resp.decision_int.data = 1
 
 	print resp
 	#os.remove("/home/ras/catkin_ws/src/rosie_object_detector/CameraCapture/camera_capture_%d.jpg"%req.img_number.data)
-	os.remove("/home/ras25/catkin_ws/src/rosie/rosie_object_detector/CameraCapture/camera_capture_%d.jpg"%req.img_number.data)
+	#os.remove("/home/ras15/catkin_ws/src/rosie/rosie_object_detector/CameraCapture/camera_capture_%d.jpg"%req.img_number.data)
+	os.remove(str(model_file))
 	return resp
 
 def classify_image_server():
