@@ -14,6 +14,12 @@
 #include <iostream>
 #include <nav_msgs/Odometry.h>
 #include <boost/filesystem.hpp>
+#include <unistd.h>
+#include <stdio.h>
+
+#define GetCurrentDir getcwd
+
+
 using namespace cv;
 
 static const std::string OPENCV_WINDOW = "Image window";
@@ -72,7 +78,7 @@ class ImageConverter
   int dilation_size;
   int color;
   int color_index;
-  std::string current_system;
+  int current_system;
   Mat erosion_dst;
   Mat dilation_dst;
   cv::Mat OriginalImage;
@@ -146,6 +152,7 @@ public:
 
       return lo_stream.str();
     }
+
 
   void color_selector(){
       nh_.getParam("/sat_low", sat_low);
@@ -305,13 +312,10 @@ public:
                   // Write to the topic as specified in MS3 here
                   // Use speaker to say what robot sees here
 
-		  //cv::imwrite("/home/ras/catkin_ws/src/rosie_object_detector/CameraCapture/camera_capture_%d.jpg",colored_object_count++, OriginalImage);
 		  colored_object_count = colored_object_count + 2;
-		  //cv::imwrite(std::string("/home/ras/catkin_ws/src/rosie_object_detector/CameraCapture/camera_capture_") + toString(colored_object_count) + std::string(".jpg"), OriginalImage);
-		  //ROS_ASSERT(cv::imwrite(std::string("CameraCapture/camera_capture_") + toString(colored_object_count) + std::string(".jpg"), OriginalImage));
-		  //ROS_INFO("Printing some path here %s", boost::filesystem::current_path());
-		  boost::filesystem::path dir("/CameraCapture");
-	      ROS_ASSERT(cv::imwrite(std::string("/home/") + current_system + std::string("/catkin_ws/src/rosie/rosie_object_detector/src/CameraCapture/camera_capture_") + toString(colored_object_count) + std::string(".jpg"), OriginalImage));
+
+		  std::cerr<<current_system<<std::endl;
+	          ROS_ASSERT(cv::imwrite(std::string("/home/") + std::string("ras") + toString(current_system) + std::string("/catkin_ws/src/rosie/rosie_object_detector/src/CameraCapture/camera_capture_") + toString(colored_object_count) + std::string(".jpg"), OriginalImage));
 		  std_msgs::Int32 number;
 		  //number.data = 1;
                   rosie_object_detector::ObjectClassify srv;
@@ -371,12 +375,11 @@ public:
               if (!battery_detected_prompt && x_position_object < max_dist){
                   battery_detected_prompt = true;
                   ROS_INFO("Battery detected!");
-		  		  static int battery_object_count = 1;
+		  static int battery_object_count = 1;
                   battery_object_count = battery_object_count + 2;
-		  //ROS_ASSERT(cv::imwrite(std::string("CameraCapture/camera_capture_") + toString(battery_object_count) + std::string(".jpg"), OriginalImage));
-		  ROS_ASSERT(cv::imwrite(std::string("/home/") + current_system + std::string("/catkin_ws/src/rosie/rosie_object_detector/src/CameraCapture/camera_capture_") + toString(battery_object_count) + std::string(".jpg"), OriginalImage));
+		  ROS_ASSERT(cv::imwrite(std::string("/home/") + std::string("ras") + toString(current_system) + std::string("/catkin_ws/src/rosie/rosie_object_detector/src/CameraCapture/camera_capture_") + toString(battery_object_count) + std::string(".jpg"), OriginalImage));
+
 		  std_msgs::Int32 number;
-		  //number.data = 450;
                   rosie_object_detector::ObjectClassify srv;
                   srv.request.img_number.data = battery_object_count;
 		  srv.request.color_ind.data = color_index;

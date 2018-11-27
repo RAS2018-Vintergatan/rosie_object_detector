@@ -51,5 +51,5 @@ hsv_battery_sat_high: 105
 hsv_battery_value_low: 50
 hsv_battery_value_high: 140
 
-current_system: 'ras25'
+current_system: 15
 

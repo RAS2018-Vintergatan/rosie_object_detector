@@ -21,6 +21,25 @@ import time
 import numpy as np
 import tensorflow as tf
 
+objectdict =	{
+    "yellowsphere": 1,
+    "yellowcube": 2,
+    "greencube": 3,
+    "greenhollowcylinder": 4,
+    "greenhollowcube": 5,
+    "orangeplus": 6,
+    "orangestar": 7,
+    "redhollowcylinder": 8,
+    "redHollowcube": 9,
+    "redsphere": 10,
+    "bluecube": 11,
+    "bluetriangle": 12,
+    "purpleplus": 13,
+    "purplestar": 14,
+    "Battery": 15,
+    "None": 16
+}
+
 def load_graph():
   #model_file="retrained_graph_6_NR.pb"
   #file_path = path.relpath("retrained_graph.pb")
@@ -209,106 +228,132 @@ def overall_call(file_name):
   return results,labels,top_k,shapes_k,colors_k, top_results
 
 def decideOnObject(index, colors, shapes, results, labels, top_indices):
+	found = 0
+	obj_id = "None"
 	if(index == 0 or index == 1 or index == 2):
 		if(colors[0] == index):
 			if(results[top_indices[0]] > 0.5):
 				print "Perfect Match"
-				return labels[top_indices[0]]
+				found = 1
+				obj_id = labels[top_indices[0]]
 			else:
 				print "Good Match"
-				return labels[top_indices[0]]
+				found = 1
+				obj_id = labels[top_indices[0]]
 	elif(index == 3 or index == 4):
 		if(colors[0] == index):
 			if(results[top_indices[0]] > 0.5):
 				print "Perfect Match"
-				return labels[top_indices[0]]
+				found = 1
+				obj_id = labels[top_indices[0]]
 			else:
 				print "Good Match"
-				return labels[top_indices[0]]
+				found = 1
+				obj_id = labels[top_indices[0]]
 	elif(index == 5 or index == 6):
 		if(colors[0] == index):
 			if(results[top_indices[0]] > 0.5):
 				print "Perfect Match"
-				return labels[top_indices[0]]
+				found = 1
+				obj_id = labels[top_indices[0]]
 			else:
 				print "Good Match"
-				return labels[top_indices[0]]
+				found = 1
+				obj_id = labels[top_indices[0]]
 	elif(index == 7):
 		if(colors[0] == index):
 			if(results[top_indices[0]] > 0.5):
 				print "Perfect Match"
-				return labels[top_indices[0]]
+				found = 1
+				obj_id = labels[top_indices[0]]
 			else:
 				print "Good Match"
-				return labels[top_indices[0]]
+				found = 1
+				obj_id = labels[top_indices[0]]
 
 	if(index == 0 or index == 1 or index == 2):
 		if(colors[1] == index):
 			if(results[top_indices[1]] > 0.5):
 				print "Good Match"
-				return labels[top_indices[1]]
+				found = 1
+				obj_id = labels[top_indices[1]]
 			else:
 				print "Bad Match"
-				return labels[top_indices[1]]
+				found = 1
+				obj_id = labels[top_indices[1]]
 	elif(index == 3 or index == 4):
 		if(colors[1] == index):
 			if(results[top_indices[1]] > 0.5):
 				print "Good Match"
-				return labels[top_indices[1]]
+				found = 1
+				obj_id = labels[top_indices[1]]
 			else:
 				print "Bad Match"
-				return labels[top_indices[1]]
+				found = 1
+				obj_id = labels[top_indices[1]]
 	elif(index == 5 or index == 6):
 		if(colors[1] == index):
 			if(results[top_indices[1]] > 0.5):
 				print "Good Match"
-				return labels[top_indices[1]]
+				found = 1
+				obj_id = labels[top_indices[1]]
 			else:
 				print "Bad Match"
-				return labels[top_indices[1]]
+				found = 1
+				obj_id = labels[top_indices[1]]
 	elif(index == 7):
 		if(colors[1] == index):
 			if(results[top_indices[1]] > 0.5):
 				print "Good Match"
-				return labels[top_indices[1]]
+				found = 1
+				obj_id = labels[top_indices[1]]
 			else:
 				print "Bad Match"
-				return labels[top_indices[1]]
+				found = 1
+				obj_id = labels[top_indices[1]]
 	if(index == 0 or index == 1 or index == 2):
 		if(colors[2] == index):
 			if(results[top_indices[2]] > 0.5):
 				print "Bad Match"
-				return labels[top_indices[2]]
+				found = 1
+				obj_id = labels[top_indices[2]]
 			else:
 				print "Very Bad Match"
-				return labels[top_indices[2]]
+				found = 1
+				obj_id = labels[top_indices[2]]
 	elif(index == 3 or index == 4):
 		if(colors[2] == index):
 			if(results[top_indices[2]] > 0.5):
 				print "Bad Match"
-				return labels[top_indices[2]]
+				found = 1
+				obj_id = labels[top_indices[2]]
 			else:
 				print "Very Bad Match"
-				return labels[top_indices[2]]
+				found = 1
+				obj_id = labels[top_indices[2]]
 	elif(index == 5 or index == 6):
 		if(colors[2] == index):
 			if(results[top_indices[2]] > 0.5):
 				print "Bad Match"
-				return labels[top_indices[2]]
+				found = 1
+				obj_id = labels[top_indices[2]]
 			else:
 				print "Very Bad Match"
-				return labels[top_indices[2]]
+				found = 1
+				obj_id = labels[top_indices[2]]
 	elif(index == 7):
 		if(colors[2] == index):
 			if(results[top_indices[2]] > 0.5):
 				print "Bad Match"
-				return labels[top_indices[2]]
+				found = 1
+				obj_id = labels[top_indices[2]]
 			else:
 				print "Very Bad Match"
-				return labels[top_indices[2]]
+				found = 1
+				obj_id = labels[top_indices[2]]
+	return found, obj_id
 		
 		
-
 
 def handle_classify_image(req):
 	print("Received an image")
@@ -328,11 +373,8 @@ def handle_classify_image(req):
 	#cv2.putText(OriginalImage,"%d"%req.color_ind.data,(200,200), font, 2,(255,255,255),2,cv2.LINE_AA)
 	#cv2.putText(OriginalImage,"%s"%b[top_k[0]],(200,200), font, 2,(255,0,255),2,cv2.LINE_AA)
 	#cv2.waitKey(0)
-	#print("the top color indices are")
-	#print(colors_k)
-        #print("The color detected by the detector is")
-	#print(req.color_ind.data)
-	shape_id = decideOnObject(req.color_ind.data, colors_k, shapes_k, a, b, top_k)
+
+	found, shape_id = decideOnObject(req.color_ind.data, colors_k, shapes_k, a, b, top_k)
 	print("The shape_id identified is")
 	print(shape_id)
 	resp.perc1.data = a[top_k[0]]
@@ -347,7 +389,7 @@ def handle_classify_image(req):
 	x = String()
 	x.data = str(shape_id)
 	resp.decision = x
-	resp.decision_int.data = 1
+	resp.decision_int.data = objectdict[shape_id]
 
 	print resp
 	#os.remove("/home/ras/catkin_ws/src/rosie_object_detector/CameraCapture/camera_capture_%d.jpg"%req.img_number.data)
