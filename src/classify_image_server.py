@@ -30,13 +30,13 @@ objectdict =	{
     "orangeplus": 6,
     "orangestar": 7,
     "redhollowcylinder": 8,
-    "redHollowcube": 9,
+    "redhollowcube": 9,
     "redsphere": 10,
     "bluecube": 11,
     "bluetriangle": 12,
     "purpleplus": 13,
     "purplestar": 14,
-    "Battery": 15,
+    "battery": 15,
     "None": 16
 }
 

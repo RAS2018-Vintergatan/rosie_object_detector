@@ -1,5 +1,5 @@
-show_object_detection_threshold_image: false
-show_battery_detection_threshold_image: true
+show_object_detection_threshold_image: true
+show_battery_detection_threshold_image: false
 print_center_pixel_hue: false
 print_color: true
 sleep_duration_object_detector: 0.0
@@ -8,8 +8,8 @@ x_factor: 12000
 y_factor: 1
 battery_factor: 1.0
 max_dist: 1.0
-erosion_size: 13
-dilation_size: 13
+erosion_size: 0
+dilation_size: 0
 
 check_all_colors: true
 color_index: 0
