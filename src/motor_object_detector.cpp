@@ -56,7 +56,8 @@ class ImageConverter
   bool object_detected_prompt, object_detected, object_dissapeared_prompt;
   bool battery_detected_prompt, battery_detected, battery_dissapeared_prompt;
   bool print_color;
-  int x_factor;
+  int x_factor, y_factor;
+  double battery_factor;
   int hue;
   int hue_interval;
   int sat_low;
@@ -290,8 +291,15 @@ public:
       p.y = m.m01/m.m00;
 
       if (p.y > 0){
-          x_position_object = (x_factor/p.y - 10)/double(100);
-          y_position_object = sin(-1*(p.x - 320)/double(600))*x_position_object;
+	  if (color_index == 7) {
+	      x_position_object = battery_factor*(x_factor/p.y - 10)/double(100);
+	      y_position_object = -1*battery_factor*y_factor*(p.x - 320)/double(600)*x_position_object;
+	  }
+	  else{
+	      x_position_object = (x_factor/p.y - 10)/double(100);
+	      y_position_object = -1*y_factor*(p.x - 320)/double(600)*x_position_object;
+	  }
+
       }
 
   // Normal object
@@ -460,6 +468,8 @@ public:
     nh_.getParam("/print_center_pixel_hue", print_center_pixel_hue);
     nh_.getParam("/print_color", print_color);
     nh_.getParam("/x_factor", x_factor);
+    nh_.getParam("/y_factor", y_factor);
+    nh_.getParam("/battery_factor", battery_factor);
     nh_.getParam("erosion_size", erosion_size);
     nh_.getParam("dilation_size", dilation_size);
     nh_.getParam("/color_interval", color_interval);

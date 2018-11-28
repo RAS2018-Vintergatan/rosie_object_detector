@@ -5,6 +5,8 @@ print_color: true
 sleep_duration_object_detector: 0.0
 lifetime_rviz: 0.5
 x_factor: 12000
+y_factor: 1
+battery_factor: 1.0
 max_dist: 1.0
 erosion_size: 13
 dilation_size: 13
