@@ -97,7 +97,7 @@ def load_labels():
 
 #if __name__ == "__main__":
 def overall_call(file_name):
-  print('Entered here')
+  #print('Entered here')
   #file_name = "tf_files/flower_photos/daisy/3475870145_685a19116d.jpg"
   #model_file = "tf_files/retrained_graph.pb"
   #label_file = "tf_files/retrained_labels.txt"
@@ -151,7 +151,7 @@ def overall_call(file_name):
   output_name = "import/" + output_layer
   input_operation = graph.get_operation_by_name(input_name);
   output_operation = graph.get_operation_by_name(output_name);
-  print('Successful here')
+  #print('Successful here')
   with tf.Session(graph=graph) as sess:
     start = time.time()
     results = sess.run(output_operation.outputs[0],
@@ -167,10 +167,10 @@ def overall_call(file_name):
   #sorted_list = results[sort_list]
   labels = load_labels()
 
-  print('\nEvaluation time (1-image): {:.3f}s\n'.format(end-start))
+  #print('\nEvaluation time (1-image): {:.3f}s\n'.format(end-start))
   template = "{} (score={:0.5f})"
   for i in top_k:
-    print(template.format(labels[i], results[i]))
+    #print(template.format(labels[i], results[i]))
     top_results.append(labels[i])
   #print("top results are")
   #print(top_results)	
@@ -236,40 +236,48 @@ def decideOnObject(index, colors, shapes, results, labels, top_indices):
 				print "Perfect Match"
 				found = 1
 				obj_id = labels[top_indices[0]]
+				return found, obj_id
 			else:
 				print "Good Match"
 				found = 1
 				obj_id = labels[top_indices[0]]
+				return found, obj_id
 	elif(index == 3 or index == 4):
 		if(colors[0] == index):
 			if(results[top_indices[0]] > 0.5):
 				print "Perfect Match"
 				found = 1
 				obj_id = labels[top_indices[0]]
+				return found, obj_id
 			else:
 				print "Good Match"
 				found = 1
 				obj_id = labels[top_indices[0]]
+				return found, obj_id
 	elif(index == 5 or index == 6):
 		if(colors[0] == index):
 			if(results[top_indices[0]] > 0.5):
 				print "Perfect Match"
 				found = 1
 				obj_id = labels[top_indices[0]]
+				return found, obj_id
 			else:
 				print "Good Match"
 				found = 1
 				obj_id = labels[top_indices[0]]
+				return found, obj_id
 	elif(index == 7):
 		if(colors[0] == index):
 			if(results[top_indices[0]] > 0.5):
 				print "Perfect Match"
 				found = 1
 				obj_id = labels[top_indices[0]]
+				return found, obj_id
 			else:
 				print "Good Match"
 				found = 1
-				obj_id = labels[top_indices[0]]
+				obj_id = labels[top_indices[0]]	
+				return found, obj_id
 
 	if(index == 0 or index == 1 or index == 2):
 		if(colors[1] == index):
@@ -277,89 +285,106 @@ def decideOnObject(index, colors, shapes, results, labels, top_indices):
 				print "Good Match"
 				found = 1
 				obj_id = labels[top_indices[1]]
+				return found, obj_id
 			else:
 				print "Bad Match"
 				found = 1
 				obj_id = labels[top_indices[1]]
+				return found, obj_id
 	elif(index == 3 or index == 4):
 		if(colors[1] == index):
 			if(results[top_indices[1]] > 0.5):
 				print "Good Match"
 				found = 1
 				obj_id = labels[top_indices[1]]
+				return found, obj_id
 			else:
 				print "Bad Match"
 				found = 1
 				obj_id = labels[top_indices[1]]
+				return found, obj_id
 	elif(index == 5 or index == 6):
 		if(colors[1] == index):
 			if(results[top_indices[1]] > 0.5):
 				print "Good Match"
 				found = 1
 				obj_id = labels[top_indices[1]]
+				return found, obj_id
 			else:
 				print "Bad Match"
 				found = 1
 				obj_id = labels[top_indices[1]]
+				return found, obj_id
 	elif(index == 7):
 		if(colors[1] == index):
 			if(results[top_indices[1]] > 0.5):
 				print "Good Match"
 				found = 1
 				obj_id = labels[top_indices[1]]
+				return found, obj_id
 			else:
 				print "Bad Match"
 				found = 1
 				obj_id = labels[top_indices[1]]
+				return found, obj_id
 	if(index == 0 or index == 1 or index == 2):
 		if(colors[2] == index):
 			if(results[top_indices[2]] > 0.5):
 				print "Bad Match"
 				found = 1
 				obj_id = labels[top_indices[2]]
+				return found, obj_id
 			else:
 				print "Very Bad Match"
 				found = 1
 				obj_id = labels[top_indices[2]]
+				return found, obj_id
 	elif(index == 3 or index == 4):
 		if(colors[2] == index):
 			if(results[top_indices[2]] > 0.5):
 				print "Bad Match"
 				found = 1
 				obj_id = labels[top_indices[2]]
+				return found, obj_id
 			else:
 				print "Very Bad Match"
 				found = 1
 				obj_id = labels[top_indices[2]]
+				return found, obj_id
 	elif(index == 5 or index == 6):
 		if(colors[2] == index):
 			if(results[top_indices[2]] > 0.5):
 				print "Bad Match"
 				found = 1
 				obj_id = labels[top_indices[2]]
+				return found, obj_id
 			else:
 				print "Very Bad Match"
 				found = 1
 				obj_id = labels[top_indices[2]]
+				return found, obj_id
 	elif(index == 7):
 		if(colors[2] == index):
 			if(results[top_indices[2]] > 0.5):
 				print "Bad Match"
 				found = 1
 				obj_id = labels[top_indices[2]]
+				return found, obj_id
 			else:
 				print "Very Bad Match"
 				found = 1
 				obj_id = labels[top_indices[2]]
+				return found, obj_id
 	return found, obj_id
 		
 		
 
 def handle_classify_image(req):
-	print("Received an image")
+	#print("Received an image")
 	bridge = CvBridge()
 	request = ObjectClassifyRequest()
-	print req
+	#print req
+	print "The incoming color index is %d"%req.color_ind.data
 	resp = ObjectClassifyResponse()
 	#a, b, top_k, shapes_k, colors_k, top_results = overall_call("/home/ras/catkin_ws/src/rosie_object_detector/CameraCapture/camera_capture_%d.jpg"%req.img_number.data)
 	my_path = os.path.abspath(os.path.dirname(__file__))	
@@ -389,9 +414,15 @@ def handle_classify_image(req):
 	x = String()
 	x.data = str(shape_id)
 	resp.decision = x
-	resp.decision_int.data = objectdict[shape_id]
+	resp.decision_int.data = objectdict[shape_id] 
 
-	print resp
+	print "Color is: %s and Shape is %s"%(colors_k[0], shapes_k[0])
+	print "Color is: %s and Shape is %s"%(colors_k[1], shapes_k[1])
+	print "Color is: %s and Shape is %s"%(colors_k[2], shapes_k[2])
+	print "Final decision made is %s"%shape_id
+
+
+	#print resp
 	#os.remove("/home/ras/catkin_ws/src/rosie_object_detector/CameraCapture/camera_capture_%d.jpg"%req.img_number.data)
 	#os.remove("/home/ras15/catkin_ws/src/rosie/rosie_object_detector/CameraCapture/camera_capture_%d.jpg"%req.img_number.data)
 	os.remove(str(model_file))
@@ -400,7 +431,7 @@ def handle_classify_image(req):
 def classify_image_server():
 	rospy.init_node('do_something_with_image_server')
 	s = rospy.Service('do_something_with_image', ObjectClassify, handle_classify_image)
-        print("Ready to do something with an image")
+	print("Ready to do something with an image")
 	rospy.spin()
 	#cv2.destroyAllWindows()
 
