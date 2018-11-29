@@ -58,6 +58,7 @@ class ImageConverter
   bool print_color;
   int x_factor, y_factor;
   double battery_factor;
+  int detector_edge_padding;
   int hue;
   int hue_interval;
   int sat_low;
@@ -102,6 +103,7 @@ public:
 	robot_x_pos = 0.0;
 	robot_y_pos = 0.0;
 	robot_angle = 0.0;
+    detector_edge_padding = 5;
     erosion_elem = 0;
     dilation_elem = 0;
     object_detected_prompt = false;
@@ -305,7 +307,7 @@ public:
   // Normal object
       if (color_index != 7)
       {
-          if (p.x > -1 && p.y > -1) {
+          if (p.x >= detector_edge_padding && p.x <= 640 - detector_edge_padding && p.y >= detector_edge_padding && p.y <= 480 - detector_edge_padding) {
               object_detected = true;
               if (object_dissapeared_prompt) {
                   object_detected_prompt = false;
@@ -374,7 +376,7 @@ public:
           }
       }
       else {
-          if (p.x > -1 && p.y > -1) {
+          if (p.x >= detector_edge_padding && p.x <= 640 - detector_edge_padding && p.y >= detector_edge_padding && p.y <= 480 - detector_edge_padding) {
               battery_detected = true;
               if (battery_dissapeared_prompt) {
                   battery_detected_prompt = false;
@@ -499,6 +501,7 @@ public:
     nh_.getParam("/hsv_battery_value_high", hsv_battery_value_high);
     nh_.getParam("/sleep_duration_object_detector", sleep_duration);
     nh_.getParam("/current_system", current_system);
+    nh_.getParam("/detector_edge_padding", detector_edge_padding);
     msg1 = *msg;
 
     cv_bridge::CvImagePtr cv_ptr;
