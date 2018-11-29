@@ -16,42 +16,42 @@ color_index: 0
 
 hue: 127
 hue_interval: 127
-sat_low: 50
+sat_low: 80
 sat_high: 255
-value_low: 50
+value_low: 80
 value_high: 255
 
 color_interval: 5
 
-hsv_red: 2
-hsv_red_interval: 2
+hsv_red: 3
+hsv_red_interval: 4
 
-hsv_orange: 7
-hsv_orange_interval: 2
+hsv_orange: 10
+hsv_orange_interval: 3
 
 hsv_yellow: 17
 hsv_yellow_interval: 3
 yellow_sat_low: 150
 yellow_value_low: 100
 
-hsv_light_green: 45
-hsv_light_green_interval: 10
+hsv_light_green: 50
+hsv_light_green_interval: 15
 
 hsv_dark_green: 71
 hsv_dark_green_interval: 10
 
 hsv_blue: 97
-hsv_blue_interval: 20
+hsv_blue_interval: 2
 
-hsv_purple: 150
-hsv_purple_interval: 20
+hsv_purple: 130
+hsv_purple_interval: 25
 
-hsv_battery_hue: 16
-hsv_battery_hue_interval: 8
-hsv_battery_sat_low: 70
-hsv_battery_sat_high: 105
-hsv_battery_value_low: 50
-hsv_battery_value_high: 140
+hsv_battery_hue: 100
+hsv_battery_hue_interval: 1000
+hsv_battery_sat_low: 0
+hsv_battery_sat_high: 135
+hsv_battery_value_low: 0
+hsv_battery_value_high: 45
 
 current_system: 15
 
