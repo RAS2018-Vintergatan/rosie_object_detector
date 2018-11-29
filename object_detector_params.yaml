@@ -7,9 +7,10 @@ lifetime_rviz: 0.5
 x_factor: 12000
 y_factor: 1
 battery_factor: 1.0
-max_dist: 1.0
-erosion_size: 0
-dilation_size: 0
+max_dist: 100.0
+detector_edge_padding: 40
+erosion_size: 10
+dilation_size: 10
 
 check_all_colors: true
 color_index: 0
