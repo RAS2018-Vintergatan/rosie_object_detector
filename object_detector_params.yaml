@@ -1,11 +1,13 @@
-show_object_detection_threshold_image: false
+show_object_detection_threshold_image: true
 show_battery_detection_threshold_image: false
 print_center_pixel_hue: false
 print_color: true
 sleep_duration_object_detector: 0.0
 lifetime_rviz: 0.5
-x_factor: 12000
-y_factor: 1
+x_factor: 9150
+x_offset: 4
+y_factor: 1.0
+y_offset: 320
 battery_factor: 1.0
 max_dist: 100.0
 detector_edge_padding: 40
@@ -47,12 +49,12 @@ hsv_blue_interval: 2
 hsv_purple: 130
 hsv_purple_interval: 25
 
-hsv_battery_hue: 100
-hsv_battery_hue_interval: 1000
+hsv_battery_hue: 105
+hsv_battery_hue_interval: 0
 hsv_battery_sat_low: 0
-hsv_battery_sat_high: 135
-hsv_battery_value_low: 0
-hsv_battery_value_high: 45
+hsv_battery_sat_high: 100
+hsv_battery_value_low: 120
+hsv_battery_value_high: 150
 
 current_system: 15
 

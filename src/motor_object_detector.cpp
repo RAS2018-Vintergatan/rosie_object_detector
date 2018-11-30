@@ -56,7 +56,8 @@ class ImageConverter
   bool object_detected_prompt, object_detected, object_dissapeared_prompt;
   bool battery_detected_prompt, battery_detected, battery_dissapeared_prompt;
   bool print_color;
-  int x_factor, y_factor;
+  int x_factor, x_offset, y_offset;
+  double y_factor;
   double battery_factor;
   int detector_edge_padding;
   int hue;
@@ -298,11 +299,13 @@ public:
 	      y_position_object = -1*battery_factor*y_factor*(p.x - 320)/double(600)*x_position_object;
 	  }
 	  else{
-	      x_position_object = (x_factor/p.y - 10)/double(100);
-	      y_position_object = -1*y_factor*(p.x - 320)/double(600)*x_position_object;
+	      x_position_object = (x_factor/p.y - x_offset)/double(100);
+	      y_position_object = -1*y_factor*(p.x - y_offset)/double(600)*x_position_object;
 	  }
 
       }
+
+	  ROS_INFO("x: %f, y: %f", x_position_object, y_position_object);
 
   // Normal object
       if (color_index != 7)
@@ -471,6 +474,8 @@ public:
     nh_.getParam("/print_color", print_color);
     nh_.getParam("/x_factor", x_factor);
     nh_.getParam("/y_factor", y_factor);
+    nh_.getParam("/x_offset", x_offset);
+    nh_.getParam("/y_offset", y_offset);
     nh_.getParam("/battery_factor", battery_factor);
     nh_.getParam("erosion_size", erosion_size);
     nh_.getParam("dilation_size", dilation_size);
