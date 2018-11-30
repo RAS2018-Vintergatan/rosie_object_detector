@@ -583,6 +583,14 @@ public:
 	//Erosion(0,0,1);
 	cv::normalize(Dy, Dy, 0, 1, cv::NORM_MINMAX);
 	cv::imshow("Depth derivative", Dy);
+
+	//Performing close operation to get the complete shape outline of the battery
+	int morph_elem = 0;
+	int morph_size = 20;
+  	cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT, cv::Size( 2*morph_size + 1, 2*morph_size+1 ), cv::Point( morph_size, morph_size ) );
+  	cv::morphologyEx(Dy, Dy, cv::MORPH_CLOSE, element);
+  	imshow("After closing operation", Dy);
+	//Suggestion: Perform find contours and look for rectangles
 	cv::waitKey(3);
   }
 
