@@ -47,18 +47,20 @@ class ImageConverter
   rosie_object_detector::ObjectClassify srv;
   visualization_msgs::Marker marker;
   cv::Point p;
-  float x_position_object;
-  float y_position_object;
+  cv::Point p_bat;
+  cv::Point p_bat_crop;
+  float x_position_object, x_position_bat;
+  float y_position_object, y_position_bat;
   float max_dist;
   int depthindex;
   bool show_object_detection_threshold_image;
-  bool show_battery_detection_threshold_image;
-  bool print_center_pixel_hue;
+  bool show_battery_detection_threshold_image, show_battery_detection_threshold_image_depth;
+  bool print_center_pixel_hue, print_battery_pixel;
   bool object_detected_prompt, object_detected, object_dissapeared_prompt;
   bool battery_detected_prompt, battery_detected, battery_dissapeared_prompt;
-  bool print_color, print_object_coords;
-  int x_factor, x_offset, y_offset;
-  double y_factor;
+  bool print_color, print_object_coords, print_battery_coords;
+  int x_factor, x_offset, y_offset, x_factor_bat, x_offset_bat, y_offset_bat;
+  double y_factor, y_factor_bat;
   double battery_factor;
   int detector_edge_padding;
   int hue;
@@ -79,7 +81,7 @@ class ImageConverter
   int erosion_elem;
   int erosion_size, erosion_size_bat;
   int dilation_elem;
-  int dilation_size;
+  int dilation_size, dilation_size_bat;
   int color;
   int color_index;
   int current_system;
@@ -96,6 +98,7 @@ class ImageConverter
   sensor_msgs::Image msg1;
   std::string classifier_decision;
   cv::Mat Dy;
+  int wall_detection_ypixel;
 
 public:
   ImageConverter()
@@ -144,18 +147,27 @@ public:
 	}
   }
 
-  void Dilation( int, void* )
+  void Dilation( int, void* , int type)
   {
     int dilation_type;
     if( dilation_elem == 0 ){ dilation_type = MORPH_RECT; }
     else if( dilation_elem == 1 ){ dilation_type = MORPH_CROSS; }
     else if( dilation_elem == 2) { dilation_type = MORPH_ELLIPSE; }
 
+    if (type == 0){
     Mat element = getStructuringElement( dilation_type,
                                          Size( 2*dilation_size + 1, 2*dilation_size+1 ),
                                          Point( dilation_size, dilation_size ) );
     /// Apply the dilation operation
     dilate( erosion_dst, dilation_dst, element );
+    }
+    else{
+    Mat element = getStructuringElement( dilation_type,
+                                         Size( 2*dilation_size_bat + 1, 2*dilation_size_bat+1 ),
+                                         Point( dilation_size_bat, dilation_size_bat ) );
+    /// Apply the dilation operation
+    dilate( Dy, Dy, element );
+    }
   }
 
    template<typename T> 
@@ -226,13 +238,19 @@ public:
     marker.type = visualization_msgs::Marker::SPHERE;
     marker.action = visualization_msgs::Marker::ADD;
     marker.lifetime = ros::Duration(lifetime_rviz);
-    if (object_visible){
-        marker.pose.position.x = x_position_object;
-    }
-    else {
-        marker.pose.position.x = 1e5;
-    }
+    if (color_index != 7){
+	    if (object_visible){
+		marker.pose.position.x = x_position_object;
+	    }
+	    else {
+		marker.pose.position.x = 1e5;
+	    }
     marker.pose.position.y = y_position_object;
+    }
+    else{
+	    marker.pose.position.x = x_position_bat;
+	    marker.pose.position.y = y_position_bat;
+    }
     marker.pose.position.z = 0.0;
     marker.pose.orientation.x = 0.0;
     marker.pose.orientation.y = 0.0;
@@ -277,14 +295,23 @@ public:
     //only if using a MESH_RESOURCE marker type:
     marker.mesh_resource = "package://pr2_description/meshes/base_v0/base.dae";
 
-    if (x_position_object < max_dist){
-        if (color_index == 7){
-            vis_pub_bat.publish( marker );
-        }
-        else {
-            vis_pub.publish( marker );
-        }
+	//ROS_INFO()
+
+    if (color_index == 7 && x_position_bat < max_dist){
+	vis_pub_bat.publish( marker );
     }
+    else if (color_index != 7 && x_position_object < max_dist){
+	vis_pub.publish( marker );
+    }
+
+    //if (x_position_object < max_dist){
+    //    if (color_index == 7){
+    //        vis_pub_bat.publish( marker );
+    //    }
+    //    else {
+    //        vis_pub.publish( marker );
+    //    }
+    //}
       
     static tf::TransformBroadcaster br;
     tf::Transform transform;
@@ -299,7 +326,7 @@ public:
       color_selector();
       inRange(HSVImage,cv::Scalar(hue - hue_interval,sat_low,value_low),cv::Scalar(hue + hue_interval,sat_high,value_high),ThreshImage);
       Erosion(0,0,0);
-      Dilation(0,0);
+      Dilation(0,0,0);
       cv::Moments m = moments(dilation_dst,true);
       p.x = m.m10/m.m00;
       p.y = m.m01/m.m00;
@@ -474,7 +501,7 @@ public:
 
   void imageCb(const sensor_msgs::ImageConstPtr& msg)
   {
-	nh_.getParam("/max_dist", max_dist);
+    nh_.getParam("/max_dist", max_dist);
     nh_.getParam("/sat_low", sat_low);
     nh_.getParam("/sat_high", sat_high);
     nh_.getParam("/hue", hue);
@@ -563,7 +590,17 @@ public:
 
   void imageCbdepth(const sensor_msgs::ImageConstPtr& msg) {
 	nh_.getParam("/derivative_threshold", derivative_threshold);
-    nh_.getParam("/erosion_size_bat", erosion_size_bat);
+    	nh_.getParam("/erosion_size_bat", erosion_size_bat);
+	nh_.getParam("/dilation_size_bat", dilation_size_bat);
+	nh_.getParam("/show_battery_detection_threshold_image_depth", show_battery_detection_threshold_image_depth);
+	nh_.getParam("/print_battery_pixel", print_battery_pixel);
+	nh_.getParam("/wall_detection_ypixel", wall_detection_ypixel);
+	nh_.getParam("/x_factor_bat", x_factor_bat);
+	nh_.getParam("/x_offset_bat", x_offset_bat);
+	nh_.getParam("/y_factor_bat", y_factor_bat);
+	nh_.getParam("/y_offset_bat", y_offset_bat);
+	nh_.getParam("/print_battery_coords", print_battery_coords);
+	nh_.getParam("/max_dist", max_dist);
 
 	int scale = 1;
 	int delta = 0;
@@ -578,20 +615,64 @@ public:
       return;
     }
 	cv::Sobel(cv_ptr->image, Dy, CV_32F, 0, 1, 5);
-    cv::GaussianBlur(Dy, Dy, Size( 15, 15), 0, 0 );
+    	cv::GaussianBlur(Dy, Dy, Size( 0, 0), 2, 0);
 	cv::threshold(Dy, Dy, derivative_threshold, 1, 0);
-	//Erosion(0,0,1);
-	cv::normalize(Dy, Dy, 0, 1, cv::NORM_MINMAX);
-	cv::imshow("Depth derivative", Dy);
+	Erosion(0,0,1);
+	Dilation(0,0,1);
+	//cv::normalize(Dy, Dy, 0, 255, cv::NORM_MINMAX);
 
-	//Performing close operation to get the complete shape outline of the battery
-	int morph_elem = 0;
-	int morph_size = 20;
-  	cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT, cv::Size( 2*morph_size + 1, 2*morph_size+1 ), cv::Point( morph_size, morph_size ) );
-  	cv::morphologyEx(Dy, Dy, cv::MORPH_CLOSE, element);
-  	imshow("After closing operation", Dy);
-	//Suggestion: Perform find contours and look for rectangles
-	cv::waitKey(3);
+	cv::Moments m_bat = moments(Dy,true);
+	p_bat.x = m_bat.m10/m_bat.m00;
+	p_bat.y = m_bat.m01/m_bat.m00;
+	
+	cv::Rect roi;
+	roi.width = 60;
+	roi.height = wall_detection_ypixel;
+	if (p_bat.x < roi.width/2) {
+		roi.x = 0;
+	}
+	else if (p_bat.x > 640 - roi.width/2){
+		roi.x = 640;
+	}
+	else {
+		roi.x = p_bat.x - roi.width/2;	
+	}
+	roi.y = 0;
+
+	cv::Mat Dy_crop = Dy(roi);
+
+	cv::Moments m_bat_crop = moments(Dy_crop,true);
+	p_bat_crop.x = m_bat_crop.m10/m_bat_crop.m00;
+	p_bat_crop.y = m_bat_crop.m01/m_bat_crop.m00;
+	//ROS_INFO("x: %d, y: %d", p_bat_crop.x, p_bat_crop.y);
+
+	if (print_battery_pixel) {
+		ROS_INFO("x: %d, y: %d", p_bat.x, p_bat.y);
+	}
+
+	if (p_bat.x > 0 && p_bat.y > 0 && p_bat_crop.x < 0){
+		//ROS_INFO("Battery detected (by depth data)");
+		
+		x_position_bat = (x_factor_bat/p_bat.y - x_offset_bat)/double(100);
+		y_position_bat = -1*y_factor_bat*(p_bat.x - y_offset_bat)/double(600)*x_position_bat;
+		
+		if (print_battery_coords){
+			ROS_INFO("coords, x: %f, y: %f", x_position_bat, y_position_bat);
+		}		
+
+		int color_index_tmp = color_index;
+		color_index = 7;		
+		publish_test(true);
+		color_index = color_index_tmp;
+
+	}
+
+	if (show_battery_detection_threshold_image_depth){
+		//circle(Dy, p_bat, 5, cv::Scalar(128,128,0), -1);
+		cv::imshow("Depth derivative", Dy);
+		cv::waitKey(3);
+	}
+  ros::Duration(sleep_duration).sleep();
   }
 
 
