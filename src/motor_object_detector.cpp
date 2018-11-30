@@ -16,6 +16,7 @@
 #include <boost/filesystem.hpp>
 #include <unistd.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #define GetCurrentDir getcwd
 
@@ -55,7 +56,7 @@ class ImageConverter
   bool print_center_pixel_hue;
   bool object_detected_prompt, object_detected, object_dissapeared_prompt;
   bool battery_detected_prompt, battery_detected, battery_dissapeared_prompt;
-  bool print_color;
+  bool print_color, print_object_coords;
   int x_factor, x_offset, y_offset;
   double y_factor;
   double battery_factor;
@@ -76,12 +77,13 @@ class ImageConverter
   int hsv_purple, hsv_purple_interval;
   int hsv_battery_hue, hsv_battery_hue_interval, hsv_battery_sat_low, hsv_battery_sat_high, hsv_battery_value_low, hsv_battery_value_high;
   int erosion_elem;
-  int erosion_size;
+  int erosion_size, erosion_size_bat;
   int dilation_elem;
   int dilation_size;
   int color;
   int color_index;
   int current_system;
+  int derivative_threshold;
   Mat erosion_dst;
   Mat dilation_dst;
   cv::Mat OriginalImage;
@@ -93,12 +95,14 @@ class ImageConverter
   double lifetime_rviz;
   sensor_msgs::Image msg1;
   std::string classifier_decision;
+  cv::Mat Dy;
 
 public:
   ImageConverter()
     : it_(nh_)
   {
     image_sub_ = it_.subscribe("/camera/rgb/image_rect_color", 1, &ImageConverter::imageCb, this);
+	image_sub_ = it_.subscribe("/camera/depth/image_rect", 1, &ImageConverter::imageCbdepth, this);
 	p.x = 0;
     p.y = 0;
 	robot_x_pos = 0.0;
@@ -118,19 +122,26 @@ public:
     cv::destroyWindow(OPENCV_WINDOW);
   }
 
-  void Erosion( int, void* )
+  void Erosion( int, void*, int type )
   {
     int erosion_type;
     if( erosion_elem == 0 ){ erosion_type = MORPH_RECT; }
     else if( erosion_elem == 1 ){ erosion_type = MORPH_CROSS; }
     else if( erosion_elem == 2) { erosion_type = MORPH_ELLIPSE; }
 
-    Mat element = getStructuringElement( erosion_type,
+    /// Apply the erosion operation
+	if (type == 0) {
+		Mat element = getStructuringElement( erosion_type,
                                          Size( 2*erosion_size + 1, 2*erosion_size+1 ),
                                          Point( erosion_size, erosion_size ) );
-
-    /// Apply the erosion operation
-    erode( ThreshImage, erosion_dst, element );
+    	erode( ThreshImage, erosion_dst, element );
+	}
+	else {
+		Mat element = getStructuringElement( erosion_type,
+                                         Size( 2*erosion_size_bat + 1, 2*erosion_size_bat+1 ),
+                                         Point( erosion_size_bat, erosion_size_bat ) );
+		erode( Dy, Dy, element );
+	}
   }
 
   void Dilation( int, void* )
@@ -287,7 +298,7 @@ public:
   void color_checker(){
       color_selector();
       inRange(HSVImage,cv::Scalar(hue - hue_interval,sat_low,value_low),cv::Scalar(hue + hue_interval,sat_high,value_high),ThreshImage);
-      Erosion(0,0);
+      Erosion(0,0,0);
       Dilation(0,0);
       cv::Moments m = moments(dilation_dst,true);
       p.x = m.m10/m.m00;
@@ -304,8 +315,10 @@ public:
 	  }
 
       }
-
-	  ROS_INFO("x: %f, y: %f", x_position_object, y_position_object);
+	  
+	  if (print_object_coords) {
+	  	ROS_INFO("x: %f, y: %f", x_position_object, y_position_object);
+	  }
 
   // Normal object
       if (color_index != 7)
@@ -461,7 +474,7 @@ public:
 
   void imageCb(const sensor_msgs::ImageConstPtr& msg)
   {
-    nh_.getParam("/max_dist", max_dist);
+	nh_.getParam("/max_dist", max_dist);
     nh_.getParam("/sat_low", sat_low);
     nh_.getParam("/sat_high", sat_high);
     nh_.getParam("/hue", hue);
@@ -477,8 +490,8 @@ public:
     nh_.getParam("/x_offset", x_offset);
     nh_.getParam("/y_offset", y_offset);
     nh_.getParam("/battery_factor", battery_factor);
-    nh_.getParam("erosion_size", erosion_size);
-    nh_.getParam("dilation_size", dilation_size);
+    nh_.getParam("/erosion_size", erosion_size);
+    nh_.getParam("/dilation_size", dilation_size);
     nh_.getParam("/color_interval", color_interval);
     nh_.getParam("/hsv_red", hsv_red);
     nh_.getParam("/hsv_orange", hsv_orange);
@@ -507,6 +520,7 @@ public:
     nh_.getParam("/sleep_duration_object_detector", sleep_duration);
     nh_.getParam("/current_system", current_system);
     nh_.getParam("/detector_edge_padding", detector_edge_padding);
+	nh_.getParam("/print_object_coords", print_object_coords);
     msg1 = *msg;
 
     cv_bridge::CvImagePtr cv_ptr;
@@ -542,9 +556,34 @@ public:
         color_checker();
     }
     // Battery check
-    color_index = 7;
-    color_checker();
+    //color_index = 7;
+    //color_checker();
     ros::Duration(sleep_duration).sleep();
+  }
+
+  void imageCbdepth(const sensor_msgs::ImageConstPtr& msg) {
+	nh_.getParam("/derivative_threshold", derivative_threshold);
+    nh_.getParam("/erosion_size_bat", erosion_size_bat);
+
+	int scale = 1;
+	int delta = 0;
+	cv_bridge::CvImagePtr cv_ptr;
+    try
+    {
+      cv_ptr = cv_bridge::toCvCopy(msg);
+    }
+    catch (cv_bridge::Exception& e)
+    {
+      ROS_ERROR("cv_bridge exception: %s", e.what());
+      return;
+    }
+	cv::Sobel(cv_ptr->image, Dy, CV_32F, 0, 1, 5);
+    cv::GaussianBlur(Dy, Dy, Size( 15, 15), 0, 0 );
+	cv::threshold(Dy, Dy, derivative_threshold, 1, 0);
+	//Erosion(0,0,1);
+	cv::normalize(Dy, Dy, 0, 1, cv::NORM_MINMAX);
+	cv::imshow("Depth derivative", Dy);
+	cv::waitKey(3);
   }
 
 
