@@ -9,13 +9,14 @@ print_battery_pixel: false
 sleep_duration_object_detector: 0.0
 lifetime_rviz: 0.5
 derivative_threshold: 0
-wall_detection_ypixel: 30
+wall_detection_ypixel: 65
+wall_detection_width: 600
 x_factor: 9150
 x_offset: 4
 y_factor: 1.0
 y_offset: 320
-x_factor_bat: 9150
-x_offset_bat: 4
+x_factor_bat: 0.7
+x_offset_bat: 0.02
 y_factor_bat: 1.0
 y_offset_bat: 320
 battery_factor: 1.0
@@ -24,7 +25,7 @@ detector_edge_padding: 40
 erosion_size: 10
 dilation_size: 10
 erosion_size_bat: 35
-dilation_size_bat: 35
+dilation_size_bat: 20
 
 check_all_colors: true
 color_index: 0

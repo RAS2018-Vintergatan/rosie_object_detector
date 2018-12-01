@@ -59,7 +59,8 @@ class ImageConverter
   bool object_detected_prompt, object_detected, object_dissapeared_prompt;
   bool battery_detected_prompt, battery_detected, battery_dissapeared_prompt;
   bool print_color, print_object_coords, print_battery_coords;
-  int x_factor, x_offset, y_offset, x_factor_bat, x_offset_bat, y_offset_bat;
+  int x_factor, x_offset, y_offset, y_offset_bat;
+  float x_factor_bat, x_offset_bat;
   double y_factor, y_factor_bat;
   double battery_factor;
   int detector_edge_padding;
@@ -98,7 +99,7 @@ class ImageConverter
   sensor_msgs::Image msg1;
   std::string classifier_decision;
   cv::Mat Dy;
-  int wall_detection_ypixel;
+  int wall_detection_ypixel, wall_detection_width;
 
 public:
   ImageConverter()
@@ -601,6 +602,7 @@ public:
 	nh_.getParam("/y_offset_bat", y_offset_bat);
 	nh_.getParam("/print_battery_coords", print_battery_coords);
 	nh_.getParam("/max_dist", max_dist);
+	nh_.getParam("/wall_detection_width", wall_detection_width);
 
 	int scale = 1;
 	int delta = 0;
@@ -626,7 +628,7 @@ public:
 	p_bat.y = m_bat.m01/m_bat.m00;
 	
 	cv::Rect roi;
-	roi.width = 60;
+	roi.width = wall_detection_width;
 	roi.height = wall_detection_ypixel;
 	if (p_bat.x < roi.width/2) {
 		roi.x = 0;
@@ -652,8 +654,13 @@ public:
 
 	if (p_bat.x > 0 && p_bat.y > 0 && p_bat_crop.x < 0){
 		//ROS_INFO("Battery detected (by depth data)");
+
+		Scalar intensity = cv_ptr->image.at<float>(p_bat);
+		float depth_value = intensity.val[0];
+		//ROS_INFO("%f", depth_value);
+		x_position_bat = x_factor_bat*(depth_value + x_offset_bat);
 		
-		x_position_bat = (x_factor_bat/p_bat.y - x_offset_bat)/double(100);
+		//x_position_bat = (x_factor_bat/p_bat.y - x_offset_bat)/double(100);
 		y_position_bat = -1*y_factor_bat*(p_bat.x - y_offset_bat)/double(600)*x_position_bat;
 		
 		if (print_battery_coords){
@@ -668,7 +675,7 @@ public:
 	}
 
 	if (show_battery_detection_threshold_image_depth){
-		//circle(Dy, p_bat, 5, cv::Scalar(128,128,0), -1);
+		//circle(cv_ptr->image, p_bat, 5, cv::Scalar(128,128,0), -1);
 		cv::imshow("Depth derivative", Dy);
 		cv::waitKey(3);
 	}
