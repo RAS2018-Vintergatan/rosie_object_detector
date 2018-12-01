@@ -23,8 +23,8 @@ max_dist: 100.0
 detector_edge_padding: 40
 erosion_size: 10
 dilation_size: 10
-erosion_size_bat: 6
-dilation_size_bat: 10
+erosion_size_bat: 35
+dilation_size_bat: 35
 
 check_all_colors: true
 color_index: 0
