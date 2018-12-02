@@ -22,22 +22,35 @@ import numpy as np
 import tensorflow as tf
 
 objectdict =	{
-    "yellowsphere": 1,
+    "yellowball": 1,
     "yellowcube": 2,
     "greencube": 3,
-    "greenhollowcylinder": 4,
+    "greencylinder": 4,
     "greenhollowcube": 5,
-    "orangeplus": 6,
-    "orangestar": 7,
-    "redhollowcylinder": 8,
+    "orangecross": 6,
+    "patric": 7,
+    "orangestar": 7,	
+    "redcylinder": 8,
     "redhollowcube": 9,
-    "redsphere": 10,
+    "redball": 10,
     "bluecube": 11,
     "bluetriangle": 12,
-    "purpleplus": 13,
+    "purplecross": 13,
     "purplestar": 14,
-    "battery": 15,
-    "None": 16
+    "None": 15
+}
+
+
+
+colordict =	{
+	0: "red",
+	1: "orange",
+	2: "yellow",
+	3: "green",
+	4: "green",
+	5: "blue",
+	6: "purple",
+	7: "battery"
 }
 
 def load_graph():
@@ -49,7 +62,7 @@ def load_graph():
   #model_file = Path("/home/ras/catkin_ws/src/rosie_object_detector/src/data/retrained_graph_final.pb")
   #model_file = Path("/home/ras15/catkin_ws/src/rosie/rosie_object_detector/src/data/retrained_graph_14B_NR_incomplete.pb")
   my_path = os.path.abspath(os.path.dirname(__file__))
-  path = os.path.join(my_path, 'data', 'retrained_graph_14B_NR_incomplete.pb')
+  path = os.path.join(my_path, 'data', 'retrained_graph_14_NR_final.pb')
   with open(str(path), "rb") as f:
     graph_def.ParseFromString(f.read())
   with graph.as_default():
@@ -178,50 +191,47 @@ def overall_call(file_name):
   for i in top_results:
 	#print (i)
 	if(i == 'orangestar'):
-		shapes_k.append("Star")
+		shapes_k.append("star")
 		colors_k.append(1)
-	if(i == 'purpleplus'):
-		shapes_k.append("Plus")
+	if(i == 'purplecross'):
+		shapes_k.append("cross")
 		colors_k.append(6)
 	if(i == 'greencube'):
-		shapes_k.append("Cube")
+		shapes_k.append("cube")
 		colors_k.append(4)
 	if(i == 'greenhollowcube'):
-		shapes_k.append("HollowCube")
+		shapes_k.append("hollowcube")
 		colors_k.append(4)
 	if(i == 'redhollowcube'):
-		shapes_k.append("HollowCube")
+		shapes_k.append("hollowcube")
 		colors_k.append(0)
-	if(i == 'redsphere'):
-		shapes_k.append("Sphere")
+	if(i == 'redball'):
+		shapes_k.append("ball")
 		colors_k.append(0)
 	if(i == 'bluetriangle'):
-		shapes_k.append("Sphere")
+		shapes_k.append("triangle")
 		colors_k.append(5)
-	if(i == 'greenhollowcylinder'):
-		shapes_k.append("Sphere")
+	if(i == 'greencylinder'):
+		shapes_k.append("cylinder")
 		colors_k.append(3)
-	if(i == 'orangeplus'):
-		shapes_k.append("Sphere")
+	if(i == 'orangecross'):
+		shapes_k.append("cross")
 		colors_k.append(1)
-	if(i == 'yellowsphere'):
-		shapes_k.append("Sphere")
+	if(i == 'yellowball'):
+		shapes_k.append("ball")
 		colors_k.append(2)
 	if(i == 'yellowcube'):
-		shapes_k.append("Cube")
+		shapes_k.append("cube")
 		colors_k.append(2)
 	if(i == 'bluecube'):
-		shapes_k.append("Cube")
+		shapes_k.append("cube")
 		colors_k.append(5)
 	if(i == 'purplestar'):
-		shapes_k.append("Star")
+		shapes_k.append("star")
 		colors_k.append(6)
-	if(i == 'redhollowcylinder'):
-		shapes_k.append("HollowCylinder")
+	if(i == 'redcylinder'):
+		shapes_k.append("cylinder")
 		colors_k.append(0)
-	if(i == 'battery'):
-		shapes_k.append("Battery")
-		colors_k.append(7)
 
 
 
@@ -230,54 +240,65 @@ def overall_call(file_name):
 def decideOnObject(index, colors, shapes, results, labels, top_indices):
 	found = 0
 	obj_id = "None"
+	shape_id = "None"
+	print "The shapes are"
+	print(shapes)
 	if(index == 0 or index == 1 or index == 2):
 		if(colors[0] == index):
 			if(results[top_indices[0]] > 0.5):
 				print "Perfect Match"
 				found = 1
 				obj_id = labels[top_indices[0]]
-				return found, obj_id
+				shape_id = shapes[0]
+				return found, obj_id, shape_id
 			else:
 				print "Good Match"
 				found = 1
 				obj_id = labels[top_indices[0]]
-				return found, obj_id
+				shape_id = shapes[0]
+				return found, obj_id, shape_id
 	elif(index == 3 or index == 4):
 		if(colors[0] == index):
 			if(results[top_indices[0]] > 0.5):
 				print "Perfect Match"
 				found = 1
 				obj_id = labels[top_indices[0]]
-				return found, obj_id
+				shape_id = shapes[0]
+				return found, obj_id, shape_id
 			else:
 				print "Good Match"
 				found = 1
 				obj_id = labels[top_indices[0]]
-				return found, obj_id
+				shape_id = shapes[0]
+				return found, obj_id, shape_id
 	elif(index == 5 or index == 6):
 		if(colors[0] == index):
 			if(results[top_indices[0]] > 0.5):
 				print "Perfect Match"
 				found = 1
 				obj_id = labels[top_indices[0]]
-				return found, obj_id
+				shape_id = shapes[0]
+				return found, obj_id, shape_id
 			else:
 				print "Good Match"
 				found = 1
 				obj_id = labels[top_indices[0]]
-				return found, obj_id
+				shape_id = shapes[0]
+				return found, obj_id, shape_id
 	elif(index == 7):
 		if(colors[0] == index):
 			if(results[top_indices[0]] > 0.5):
 				print "Perfect Match"
 				found = 1
 				obj_id = labels[top_indices[0]]
-				return found, obj_id
+				shape_id = shapes[0]
+				return found, obj_id, shape_id
 			else:
 				print "Good Match"
 				found = 1
 				obj_id = labels[top_indices[0]]	
-				return found, obj_id
+				shape_id = shapes[0]
+				return found, obj_id, shape_id
 
 	if(index == 0 or index == 1 or index == 2):
 		if(colors[1] == index):
@@ -285,97 +306,169 @@ def decideOnObject(index, colors, shapes, results, labels, top_indices):
 				print "Good Match"
 				found = 1
 				obj_id = labels[top_indices[1]]
-				return found, obj_id
+				shape_id = shapes[1]
+				return found, obj_id, shape_id
 			else:
 				print "Bad Match"
 				found = 1
 				obj_id = labels[top_indices[1]]
-				return found, obj_id
+				shape_id = shapes[1]
+				return found, obj_id, shape_id
 	elif(index == 3 or index == 4):
 		if(colors[1] == index):
 			if(results[top_indices[1]] > 0.5):
 				print "Good Match"
 				found = 1
 				obj_id = labels[top_indices[1]]
-				return found, obj_id
+				shape_id = shapes[1]
+				return found, obj_id, shape_id
 			else:
 				print "Bad Match"
 				found = 1
 				obj_id = labels[top_indices[1]]
-				return found, obj_id
+				shape_id = shapes[1]
+				return found, obj_id, shape_id
 	elif(index == 5 or index == 6):
 		if(colors[1] == index):
 			if(results[top_indices[1]] > 0.5):
-				print "Good Match"
+				print "Good Match ENTEREEEDDD HEREEEE"
 				found = 1
 				obj_id = labels[top_indices[1]]
-				return found, obj_id
+				shape_id = shapes[1]
+				return found, obj_id, shape_id
 			else:
 				print "Bad Match"
 				found = 1
 				obj_id = labels[top_indices[1]]
-				return found, obj_id
+				shape_id = shapes[1]
+				return found, obj_id, shape_id
 	elif(index == 7):
 		if(colors[1] == index):
 			if(results[top_indices[1]] > 0.5):
 				print "Good Match"
 				found = 1
 				obj_id = labels[top_indices[1]]
-				return found, obj_id
+				shape_id = shapes[1]
+				return found, obj_id, shape_id
 			else:
 				print "Bad Match"
 				found = 1
 				obj_id = labels[top_indices[1]]
-				return found, obj_id
+				shape_id = shapes[1]
+				return found, obj_id, shape_id
 	if(index == 0 or index == 1 or index == 2):
 		if(colors[2] == index):
 			if(results[top_indices[2]] > 0.5):
 				print "Bad Match"
 				found = 1
 				obj_id = labels[top_indices[2]]
-				return found, obj_id
+				shape_id = shapes[2]
+				return found, obj_id, shape_id
 			else:
 				print "Very Bad Match"
 				found = 1
 				obj_id = labels[top_indices[2]]
-				return found, obj_id
+				shape_id = shapes[2]
+				return found, obj_id, shape_id
 	elif(index == 3 or index == 4):
 		if(colors[2] == index):
 			if(results[top_indices[2]] > 0.5):
 				print "Bad Match"
 				found = 1
 				obj_id = labels[top_indices[2]]
-				return found, obj_id
+				shape_id = shapes[2]
+				return found, obj_id, shape_id
 			else:
 				print "Very Bad Match"
 				found = 1
 				obj_id = labels[top_indices[2]]
-				return found, obj_id
+				shape_id = shapes[2]
+				return found, obj_id, shape_id
 	elif(index == 5 or index == 6):
 		if(colors[2] == index):
 			if(results[top_indices[2]] > 0.5):
 				print "Bad Match"
 				found = 1
 				obj_id = labels[top_indices[2]]
-				return found, obj_id
+				shape_id = shapes[2]
+				return found, obj_id, shape_id
 			else:
 				print "Very Bad Match"
 				found = 1
 				obj_id = labels[top_indices[2]]
-				return found, obj_id
+				shape_id = shapes[2]
+				return found, obj_id, shape_id
 	elif(index == 7):
 		if(colors[2] == index):
 			if(results[top_indices[2]] > 0.5):
 				print "Bad Match"
 				found = 1
 				obj_id = labels[top_indices[2]]
-				return found, obj_id
+				shape_id = shapes[2]
+				return found, obj_id, shape_id
 			else:
 				print "Very Bad Match"
 				found = 1
 				obj_id = labels[top_indices[2]]
-				return found, obj_id
-	return found, obj_id
+				shape_id = shapes[2]
+				return found, obj_id, shape_id
+	if(index == 0 or index == 1 or index == 2):
+		if(colors[3] == index):
+			if(results[top_indices[3]] > 0.5):
+				print "Bad Match"
+				found = 1
+				obj_id = labels[top_indices[3]]
+				shape_id = shapes[3]
+				return found, obj_id, shape_id
+			else:
+				print "Very Bad Match"
+				found = 1
+				obj_id = labels[top_indices[3]]
+				shape_id = shapes[3]
+				return found, obj_id, shape_id
+	elif(index == 3 or index == 4):
+		if(colors[3] == index):
+			if(results[top_indices[3]] > 0.5):
+				print "Bad Match"
+				found = 1
+				obj_id = labels[top_indices[3]]
+				shape_id = shapes[3]
+				return found, obj_id, shape_id
+			else:
+				print "Very Bad Match"
+				found = 1
+				obj_id = labels[top_indices[3]]
+				shape_id = shapes[3]
+				return found, obj_id, shape_id
+	elif(index == 5 or index == 6):
+		if(colors[3] == index):
+			if(results[top_indices[3]] > 0.5):
+				print "Bad Match"
+				found = 1
+				obj_id = labels[top_indices[3]]
+				shape_id = shapes[3]
+				return found, obj_id, shape_id
+			else:
+				print "Very Bad Match"
+				found = 1
+				obj_id = labels[top_indices[3]]
+				shape_id = shapes[3]
+				return found, obj_id, shape_id
+	elif(index == 7):
+		if(colors[3] == index):
+			if(results[top_indices[3]] > 0.5):
+				print "Bad Match"
+				found = 1
+				obj_id = labels[top_indices[3]]
+				shape_id = shapes[3]
+				return found, obj_id, shape_id
+			else:
+				print "Very Bad Match"
+				found = 1
+				obj_id = labels[top_indices[3]]
+				shape_id = shapes[3]
+				return found, obj_id, shape_id
+	return found, obj_id, shape_id
 		
 		
 
@@ -399,7 +492,7 @@ def handle_classify_image(req):
 	#cv2.putText(OriginalImage,"%s"%b[top_k[0]],(200,200), font, 2,(255,0,255),2,cv2.LINE_AA)
 	#cv2.waitKey(0)
 
-	found, shape_id = decideOnObject(req.color_ind.data, colors_k, shapes_k, a, b, top_k)
+	found, object_id, shape_id = decideOnObject(req.color_ind.data, colors_k, shapes_k, a, b, top_k)
 	print("The shape_id identified is")
 	print(shape_id)
 	resp.perc1.data = a[top_k[0]]
@@ -412,14 +505,19 @@ def handle_classify_image(req):
 	resp.second_color.data = colors_k[1]
 	resp.third_color.data = colors_k[2]
 	x = String()
-	x.data = str(shape_id)
+	if (found == 1):
+		x.data = colordict[req.color_ind.data] + str(shape_id)
+		if x.data == "orangestar":
+			x.data = "patric"
+	else:
+		x.data = "None"
 	resp.decision = x
-	resp.decision_int.data = objectdict[shape_id] 
+	resp.decision_int.data = objectdict[object_id] 
 
 	print "Color is: %s and Shape is %s"%(colors_k[0], shapes_k[0])
 	print "Color is: %s and Shape is %s"%(colors_k[1], shapes_k[1])
 	print "Color is: %s and Shape is %s"%(colors_k[2], shapes_k[2])
-	print "Final decision made is %s"%shape_id
+	print "Final decision made is %s"%x.data
 
 
 	#print resp
