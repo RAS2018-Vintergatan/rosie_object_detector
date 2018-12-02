@@ -4,21 +4,24 @@ show_battery_detection_threshold_image_depth: false
 print_center_pixel_hue: false
 print_color: true
 print_object_coords: false
-print_battery_coords: false
+print_battery_coords: true
 print_battery_pixel: false
 sleep_duration_object_detector: 0.0
 lifetime_rviz: 0.5
 derivative_threshold: 0
-wall_detection_ypixel: 65
-wall_detection_width: 600
+wall_detection_ypixel: 70
+wall_detection_width: 300
+battery_deadzone_x: 150
+battery_deadzone_offset: -70
+battery_max_dist: 0.31
 x_factor: 9150
 x_offset: 4
 y_factor: 1.0
 y_offset: 320
-x_factor_bat: 0.7
-x_offset_bat: 0.02
-y_factor_bat: 1.0
-y_offset_bat: 320
+x_factor_bat: 1.0
+x_offset_bat: 0.045
+y_factor_bat: 1.15
+y_offset_bat: 242
 battery_factor: 1.0
 max_dist: 100.0
 detector_edge_padding: 40
@@ -69,5 +72,4 @@ hsv_battery_sat_high: 50
 hsv_battery_value_low: 120
 hsv_battery_value_high: 150
 
-current_system: 15
-
+current_system: 25

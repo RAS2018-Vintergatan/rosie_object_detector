@@ -38,7 +38,7 @@ class ImageConverter
   ros::Subscriber odom_sub = nh_.subscribe("/odom",100,odomCallback);
   image_transport::ImageTransport it_;
   image_transport::Subscriber image_sub_;
-  image_transport::Subscriber image_depth;
+  image_transport::Subscriber image_sub_depth;
   image_transport::Publisher image_pub_;
   ros::Publisher vis_pub = nh_.advertise<visualization_msgs::Marker>( "visualization_marker", 0 );
   ros::Publisher vis_pub_bat = nh_.advertise<visualization_msgs::Marker>( "visualization_marker_battery", 0 );
@@ -59,8 +59,8 @@ class ImageConverter
   bool object_detected_prompt, object_detected, object_dissapeared_prompt;
   bool battery_detected_prompt, battery_detected, battery_dissapeared_prompt;
   bool print_color, print_object_coords, print_battery_coords;
-  int x_factor, x_offset, y_offset, y_offset_bat;
-  float x_factor_bat, x_offset_bat;
+  int x_factor, x_offset, y_offset, y_offset_bat, battery_deadzone_x, battery_deadzone_offset;
+  float x_factor_bat, x_offset_bat, battery_max_dist;
   double y_factor, y_factor_bat;
   double battery_factor;
   int detector_edge_padding;
@@ -106,7 +106,7 @@ public:
     : it_(nh_)
   {
     image_sub_ = it_.subscribe("/camera/rgb/image_rect_color", 1, &ImageConverter::imageCb, this);
-	image_sub_ = it_.subscribe("/camera/depth/image_rect", 1, &ImageConverter::imageCbdepth, this);
+	image_sub_depth = it_.subscribe("/camera/depth/image_rect", 1, &ImageConverter::imageCbdepth, this);
 	p.x = 0;
     p.y = 0;
 	robot_x_pos = 0.0;
@@ -603,6 +603,9 @@ public:
 	nh_.getParam("/print_battery_coords", print_battery_coords);
 	nh_.getParam("/max_dist", max_dist);
 	nh_.getParam("/wall_detection_width", wall_detection_width);
+	nh_.getParam("/battery_deadzone_x", battery_deadzone_x);
+	nh_.getParam("/battery_deadzone_offset", battery_deadzone_offset);
+	nh_.getParam("/battery_max_dist", battery_max_dist);
 
 	int scale = 1;
 	int delta = 0;
@@ -633,14 +636,18 @@ public:
 	if (p_bat.x < roi.width/2) {
 		roi.x = 0;
 	}
-	else if (p_bat.x > 640 - roi.width/2){
-		roi.x = 640;
-	}
+	else if (p_bat.x < 640 - roi.width/2){
+		roi.x = 640 - roi.width - 1;
+			}
 	else {
 		roi.x = p_bat.x - roi.width/2;	
 	}
 	roi.y = 0;
 
+	roi.x = 0;
+	roi.width = 640;
+
+	//ROS_INFO("x: %d, width: %d, y: %d, height: %d", roi.x, roi.width, roi.y, roi.height);
 	cv::Mat Dy_crop = Dy(roi);
 
 	cv::Moments m_bat_crop = moments(Dy_crop,true);
@@ -652,7 +659,7 @@ public:
 		ROS_INFO("x: %d, y: %d", p_bat.x, p_bat.y);
 	}
 
-	if (p_bat.x > 0 && p_bat.y > 0 && p_bat_crop.x < 0){
+	if (p_bat.x > battery_deadzone_x + battery_deadzone_offset && p_bat.x < 640 - battery_deadzone_x + battery_deadzone_offset && p_bat.y > 0 && p_bat_crop.x < 0){
 		//ROS_INFO("Battery detected (by depth data)");
 
 		Scalar intensity = cv_ptr->image.at<float>(p_bat);
@@ -662,15 +669,16 @@ public:
 		
 		//x_position_bat = (x_factor_bat/p_bat.y - x_offset_bat)/double(100);
 		y_position_bat = -1*y_factor_bat*(p_bat.x - y_offset_bat)/double(600)*x_position_bat;
-		
-		if (print_battery_coords){
-			ROS_INFO("coords, x: %f, y: %f", x_position_bat, y_position_bat);
-		}		
+		if (x_position_bat < battery_max_dist){
+			if (print_battery_coords){
+				ROS_INFO("coords, x: %f, y: %f", x_position_bat, y_position_bat);
+			}		
 
-		int color_index_tmp = color_index;
-		color_index = 7;		
-		publish_test(true);
-		color_index = color_index_tmp;
+			int color_index_tmp = color_index;
+			color_index = 7;		
+			publish_test(true);
+			color_index = color_index_tmp;
+		}
 
 	}
 
