@@ -59,6 +59,7 @@ class ImageConverter
   bool object_detected_prompt, object_detected, object_dissapeared_prompt;
   bool battery_detected_prompt, battery_detected, battery_dissapeared_prompt;
   bool print_color, print_object_coords, print_battery_coords;
+  bool standing;
   int x_factor, x_offset, y_offset, y_offset_bat, battery_deadzone_x, battery_deadzone_offset;
   float x_factor_bat, x_offset_bat, battery_max_dist;
   double y_factor, y_factor_bat;
@@ -235,7 +236,18 @@ public:
     marker.header.frame_id = "camera_depth_frame";
     marker.header.stamp = ros::Time();
     marker.ns = "my_namespace";
-    marker.id = color_index;
+
+    if (color_index != 7){
+    	marker.id = color_index;
+    }
+    else {
+	if (standing) {
+		marker.id = 1;
+	}
+	else {
+		marker.id = 0;
+	}
+    }
     marker.type = visualization_msgs::Marker::SPHERE;
     marker.action = visualization_msgs::Marker::ADD;
     marker.lifetime = ros::Duration(lifetime_rviz);
@@ -664,12 +676,46 @@ public:
 
 		Scalar intensity = cv_ptr->image.at<float>(p_bat);
 		float depth_value = intensity.val[0];
+
+		//Check if standing or laying down
+		Scalar intensity_test_y;
+		Scalar intensity_test_x;
+		float depth_value_test_x;
+		float depth_value_test_y;
+
+		bool standing_test = true;
+		int i_standing = 0;
+		int step_size_standing_test = 30;
+
 		//ROS_INFO("%f", depth_value);
 		x_position_bat = x_factor_bat*(depth_value + x_offset_bat);
 		
 		//x_position_bat = (x_factor_bat/p_bat.y - x_offset_bat)/double(100);
 		y_position_bat = -1*y_factor_bat*(p_bat.x - y_offset_bat)/double(600)*x_position_bat;
 		if (x_position_bat < battery_max_dist){
+			while (standing_test && p_bat.y + i_standing*step_size_standing_test < 480 && p_bat.x + i_standing*step_size_standing_test < 640) {
+				intensity_test_y = Dy.at<float>(p_bat.y + i_standing*step_size_standing_test, p_bat.x);
+				intensity_test_x = Dy.at<float>(p_bat.y, p_bat.x + i_standing*step_size_standing_test);
+
+				depth_value_test_y = intensity_test_y.val[0];
+				depth_value_test_x = intensity_test_x.val[0];
+
+				if (depth_value_test_y > depth_value_test_x){
+					ROS_INFO("Standing!");
+					standing = true;
+					standing_test = false;
+				}
+				else if (depth_value_test_x > depth_value_test_y){
+					ROS_INFO("Laying down!");
+					standing = false;
+					standing_test = false;
+				}
+				else {
+					i_standing++;
+				}
+
+				//ROS_INFO("%f", depth_value_test);
+			}
 			if (print_battery_coords){
 				ROS_INFO("coords, x: %f, y: %f", x_position_bat, y_position_bat);
 			}		
